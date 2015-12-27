@@ -27,7 +27,7 @@ namespace IdentityModel.AspNet.OAuth2Introspection
         /// <summary>
         /// Specifies if the discover document get loaded at startup time, or during the first request.
         /// </summary>
-        public bool DelayLoadDiscoveryDocument { get; set; } = false;
+        public bool DelayLoadDiscoveryDocument { get; set; } = true;
 
         /// <summary>
         /// Sets the URL of the introspection endpoint.
