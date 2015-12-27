@@ -49,6 +49,7 @@ namespace IdentityModel.AspNet.OAuth2Introspection
             else
             {
                 endpoint = GetIntrospectionEndpointFromDiscoveryDocument();
+                Options.IntrospectionEndpoint = endpoint;
             }
 
             IntrospectionClient client;
