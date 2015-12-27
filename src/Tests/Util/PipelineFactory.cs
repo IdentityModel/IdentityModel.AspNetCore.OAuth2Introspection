@@ -1,4 +1,7 @@
-﻿using IdentityModel.AspNet.OAuth2Introspection;
+﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
+
+using IdentityModel.AspNet.OAuth2Introspection;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.TestHost;
 using Microsoft.Extensions.DependencyInjection;
