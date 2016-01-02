@@ -41,8 +41,8 @@ task Setup {
 		if($hasVersion) {
 			$runtimeVersion = $globalSettingsObj.sdk.version;
 			Write-Output "Setting runtime v$runtimeVersion as active runtime"
-			dnvm install $globalSettingsObj.sdk.version
-            dnvm use $globalSettingsObj.sdk.version
+			dnvm install $globalSettingsObj.sdk.version -r coreclr
+            dnvm install $globalSettingsObj.sdk.version -r clr
 		}
 		else {
 			throw "global.json doesn't contain sdk version."
