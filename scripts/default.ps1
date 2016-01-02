@@ -82,11 +82,8 @@ task PatchProject {
        
        $packableProjectDirectories | foreach {
             Write-Host "Patching project.json"
-            Write-Host "before:"
-           
-            $json = (Get-Content "$_\project.json" | Out-String)
-            Write-Host $json
             
+            $json = (Get-Content "$_\project.json" | Out-String)
             $config = [Newtonsoft.Json.Linq.JObject]::Parse($json) # parse string
             $version = $config.Item("version").ToString()
             $config.Item("version") = New-Object -TypeName Newtonsoft.Json.Linq.JValue -ArgumentList "$version-build$paddedBuildNumber"
@@ -94,7 +91,6 @@ task PatchProject {
             $config.ToString() | Out-File "$_\project.json"
             
             $after = (Get-Content "$_\project.json" | Out-String)
-            Write-Host "after:"
             Write-Host $after
 	   }
     }
