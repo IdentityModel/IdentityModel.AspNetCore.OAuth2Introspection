@@ -73,22 +73,29 @@ task RunTests -depends Restore, Clean {
 
 task PatchProject {
     if (Test-Path Env:\APPVEYOR_BUILD_NUMBER) {
-	   $buildNumber = [int]$Env:APPVEYOR_BUILD_NUMBER.ToString().PadLeft(5,'0')
+	   $buildNumber = [int]$Env:APPVEYOR_BUILD_NUMBER
+       $paddedBuildNumber = $buildnumber.ToString().PadLeft(5,'0')
 	   Write-Host "Using AppVeyor build number"
-       Write-Host $buildnumber
+       Write-Host $paddedBuildNumber
        
        [Reflection.Assembly]::LoadFile($jsonlib)
        
        $packableProjectDirectories | foreach {
-            $json = (Get-Content "$_\project.json" | Out-String) # read file
+            Write-Host "Patching project.json"
+            Write-Host "before:"
+           
+            $json = (Get-Content "$_\project.json" | Out-String)
             Write-Host $json
+            
             $config = [Newtonsoft.Json.Linq.JObject]::Parse($json) # parse string
             $version = $config.Item("version").ToString()
-            $config.Item("version") = New-Object -TypeName Newtonsoft.Json.Linq.JValue -ArgumentList "$version-build$buildnumber"
-
-            Write-Host $config.ToString()
+            $config.Item("version") = New-Object -TypeName Newtonsoft.Json.Linq.JValue -ArgumentList "$version-build$paddedBuildNumber"
 
             $config.ToString() | Out-File "$_\project.json"
+            
+            $after = (Get-Content "$_\project.json" | Out-String)
+            Write-Host "after:"
+            Write-Host $after
 	   }
     }
 }
