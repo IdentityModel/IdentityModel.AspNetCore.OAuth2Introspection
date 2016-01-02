@@ -18,7 +18,7 @@ $appProjects = Get-ChildItem "$srcRoot\**\$projectFileName" | foreach { $_.FullN
 $testProjects = Get-ChildItem "$testsRoot\**\$projectFileName" | foreach { $_.FullName }
 $packableProjectDirectories = @("$srcRoot\IdentityModel.AspNet.OAuth2Introspection")
 
-task default -depends TestParams, Setup, Build, RunTests, Pack
+task default -depends PatchProject, TestParams, Setup, Build, RunTests, Pack
 
 task TestParams { 
 	Assert ($configuration -ne $null) '$configuration should not be null'
