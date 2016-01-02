@@ -1,5 +1,6 @@
 properties {
     $configuration = $configuration
+    $runtimeVersion = "0.0.0"
 }
 
 Include ".\core\utils.ps1"
@@ -40,9 +41,11 @@ task Setup {
 			Test-Any { $_.Name -eq "version" }
 			
 		if($hasVersion) {
-			$runtimeVersion = $globalSettingsObj.sdk.version;
-			dnvm install $globalSettingsObj.sdk.version -r coreclr -a x64 -NoNative
-            dnvm install $globalSettingsObj.sdk.version -r clr -a x64
+            $script:runtimeVersion = $globalSettingsObj.sdk.version;
+			Write-Host("Using: $script:runtimeVersion")
+            
+            dnvm install $script:runtimeVersion -r coreclr -a x64 -NoNative
+            dnvm install $script:runtimeVersion -r clr -a x64
 		}
 		else {
 			throw "global.json doesn't contain sdk version."
@@ -66,7 +69,13 @@ task Build -depends Restore, Clean {
 
 task RunTests -depends Restore, Clean {
 	$testProjects | foreach {
-		Write-Output "Running tests for '$_'"
+		Write-Output "Running tests for '$_' / CLR"
+        dnvm use $script:runtimeVersion -r clr -a x64
+		dnx --project "$_" Microsoft.Dnx.ApplicationHost test
+        
+        
+        Write-Output "Running tests for '$_' / CoreCLR"
+        dnvm use $script:runtimeVersion -r coreclr -a x64
 		dnx --project "$_" Microsoft.Dnx.ApplicationHost test
 	}
 }
