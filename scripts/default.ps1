@@ -92,7 +92,7 @@ task PatchProject {
             
             $after = (Get-Content "$_\project.json" | Out-String)
             Write-Host $after
-	   }
+        }
     }
 }
 
