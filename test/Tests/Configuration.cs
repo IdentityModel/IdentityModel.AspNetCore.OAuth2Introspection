@@ -63,6 +63,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         {
             _options.IntrospectionEndpoint = "http://endpoint";
             _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+            _options.DelayLoadDiscoveryDocument = false;
 
             Action act = () => PipelineFactory.CreateClient(_options);
 
@@ -74,6 +75,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         {
             _options.Authority = "http://localhost:6666";
             _options.ScopeName = "scope";
+            _options.DelayLoadDiscoveryDocument = false;
 
             Action act = () => PipelineFactory.CreateClient(_options);
 
@@ -97,6 +99,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         {
             _options.Authority = "http://authority.com";
             _options.ScopeName = "scope";
+            _options.DelayLoadDiscoveryDocument = false;
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;
@@ -112,6 +115,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         {
             _options.Authority = "http://authority.com/";
             _options.ScopeName = "scope";
+            _options.DelayLoadDiscoveryDocument = false;
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;
@@ -127,6 +131,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         {
             _options.Authority = "http://authority.com/";
             _options.ScopeName = "scope";
+            _options.DelayLoadDiscoveryDocument = false;
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;

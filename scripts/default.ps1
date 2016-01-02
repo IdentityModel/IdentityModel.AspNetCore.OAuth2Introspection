@@ -15,7 +15,7 @@ $testsRoot = "$solutionRoot\test"
 $globalFilePath = "$solutionRoot\global.json"
 $appProjects = Get-ChildItem "$srcRoot\**\$projectFileName" | foreach { $_.FullName }
 $testProjects = Get-ChildItem "$testsRoot\**\$projectFileName" | foreach { $_.FullName }
-$packableProjectDirectories = @("$srcRoot\IdentityServer4.AccessTokenValidation")
+$packableProjectDirectories = @("$srcRoot\IdentityModel.AspNet.OAuth2Introspection")
 
 task default -depends TestParams, Setup, Build, RunTests, Pack
 
