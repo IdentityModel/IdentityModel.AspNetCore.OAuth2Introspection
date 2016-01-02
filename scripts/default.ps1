@@ -6,6 +6,7 @@ Include ".\core\utils.ps1"
 
 $projectFileName = "project.json"
 $solutionRoot = (get-item $PSScriptRoot).parent.fullname
+$jsonlib= "$solutionRoot\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll"
 $artifactsRoot = "$solutionRoot\artifacts"
 $artifactsBuildRoot = "$artifactsRoot\build"
 $artifactsTestRoot = "$artifactsRoot\test"
@@ -40,7 +41,6 @@ task Setup {
 			
 		if($hasVersion) {
 			$runtimeVersion = $globalSettingsObj.sdk.version;
-			Write-Output "Setting runtime v$runtimeVersion as active runtime"
 			dnvm install $globalSettingsObj.sdk.version -r coreclr
             dnvm install $globalSettingsObj.sdk.version -r clr
 		}
@@ -69,6 +69,28 @@ task RunTests -depends Restore, Clean {
 		Write-Output "Running tests for '$_'"
 		dnx --project "$_" Microsoft.Dnx.ApplicationHost test
 	}
+}
+
+task PatchProject {
+    if (Test-Path Env:\APPVEYOR_BUILD_NUMBER) {
+	   $buildNumber = [int]$Env:APPVEYOR_BUILD_NUMBER.ToString().PadLeft(5,'0')
+	   Write-Host "Using AppVeyor build number"
+       Write-Host $buildnumber
+       
+       [Reflection.Assembly]::LoadFile($jsonlib)
+       
+       $packableProjectDirectories | foreach {
+            $json = (Get-Content "$_\project.json" | Out-String) # read file
+            Write-Host $json
+            $config = [Newtonsoft.Json.Linq.JObject]::Parse($json) # parse string
+            $version = $config.Item("version").ToString()
+            $config.Item("version") = New-Object -TypeName Newtonsoft.Json.Linq.JValue -ArgumentList $version + "-" + $buildnumber
+
+            Write-Host $config.ToString()
+
+            $config.ToString() | Out-File "$_\project.json"
+	   }
+    }
 }
 
 task Pack -depends Restore, Clean {
