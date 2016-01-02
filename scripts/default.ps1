@@ -84,7 +84,7 @@ task PatchProject {
             Write-Host $json
             $config = [Newtonsoft.Json.Linq.JObject]::Parse($json) # parse string
             $version = $config.Item("version").ToString()
-            $config.Item("version") = New-Object -TypeName Newtonsoft.Json.Linq.JValue -ArgumentList $version + "-" + $buildnumber
+            $config.Item("version") = New-Object -TypeName Newtonsoft.Json.Linq.JValue -ArgumentList "$version-build$buildnumber"
 
             Write-Host $config.ToString()
 
