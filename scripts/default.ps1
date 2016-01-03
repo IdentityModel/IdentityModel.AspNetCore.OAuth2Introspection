@@ -44,8 +44,8 @@ task Setup {
             $script:runtimeVersion = $globalSettingsObj.sdk.version;
 			Write-Host("Using: $script:runtimeVersion")
             
-            dnvm install $script:runtimeVersion -r coreclr -a x64 -NoNative
-            dnvm install $script:runtimeVersion -r clr -a x64
+            dnvm install $script:runtimeVersion -r coreclr -a x86 -NoNative
+            dnvm install $script:runtimeVersion -r clr -a x86
 		}
 		else {
 			throw "global.json doesn't contain sdk version."
@@ -70,12 +70,12 @@ task Build -depends Restore, Clean {
 task RunTests -depends Restore, Clean {
 	$testProjects | foreach {
 		Write-Output "Running tests for '$_' / CLR"
-        dnvm use $script:runtimeVersion -r clr -a x64
+        dnvm use $script:runtimeVersion -r clr -a x86
 		dnx --project "$_" Microsoft.Dnx.ApplicationHost test
         
         
         Write-Output "Running tests for '$_' / CoreCLR"
-        dnvm use $script:runtimeVersion -r coreclr -a x64
+        dnvm use $script:runtimeVersion -r coreclr -a x86
 		dnx --project "$_" Microsoft.Dnx.ApplicationHost test
 	}
 }
