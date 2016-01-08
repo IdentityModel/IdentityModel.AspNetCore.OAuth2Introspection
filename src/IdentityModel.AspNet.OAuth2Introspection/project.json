@@ -1,5 +1,5 @@
 ﻿{
-  "version": "1.0.0",
+  "version": "1.0.0-beta3",
   "description": "ASP.NET 5 Authentication Middleware using OAuth 2.0 Introspection (rfc7662)",
   "authors": [ "Dominick Baier", "Brock Allen" ],
   "tags": [ "OAuth2", "OAuth 2.0", "Introspection", "Security", "Identity" ],
