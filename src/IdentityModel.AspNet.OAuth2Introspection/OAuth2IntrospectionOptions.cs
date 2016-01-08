@@ -83,7 +83,7 @@ namespace IdentityModel.AspNet.OAuth2Introspection
         /// <summary>
         /// Specifies whether the token should be added as claim called 'token' to the principal 
         /// </summary>
-        public bool SaveTokenAsClaim { get; set; } = true;
+        public bool SaveTokensAsClaims { get; set; } = false;
 
         /// <summary>
         /// Specifies the method how to retrieve the token from the HTTP request

@@ -52,9 +52,9 @@ namespace IdentityModel.AspNet.OAuth2Introspection
                     .Where(c => c.Item1 != "active")
                     .Select(c => new Claim(c.Item1, c.Item2)));
 
-                if (Options.SaveTokenAsClaim)
+                if (Options.SaveTokensAsClaims)
                 {
-                    claims.Add(new Claim("token", token));
+                    claims.Add(new Claim("access_token", token));
                 }
 
                 var id = new ClaimsIdentity(claims, Options.AuthenticationScheme, Options.NameClaimType, Options.RoleClaimType);
