@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("IdentityModel.AspNet.OAuth2Introspection")]
+[assembly: AssemblyTitle("IdentityModel.AspNetCore.OAuth2Introspection")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("IdentityModel.AspNet.OAuth2Introspection")]
+[assembly: AssemblyProduct("IdentityModel.AspNetCore.OAuth2Introspection")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

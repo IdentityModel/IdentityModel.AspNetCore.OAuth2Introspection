@@ -1,11 +1,11 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Microsoft.AspNet.Http;
+using  Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
 
-namespace IdentityModel.AspNet.OAuth2Introspection
+namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     public static class TokenRetrieval
     {
