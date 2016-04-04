@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using IdentityModel.AspNet.OAuth2Introspection;
+using IdentityModel.AspNetCore.OAuth2Introspection;
 using System;
 
-namespace Microsoft.AspNet.Builder
+namespace  Microsoft.AspNetCore.Builder
 {
     public static class OAuth2IntrospectionApplicationBuilderExtensions
     {

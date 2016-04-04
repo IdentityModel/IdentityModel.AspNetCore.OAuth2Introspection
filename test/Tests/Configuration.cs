@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using FluentAssertions;
-using IdentityModel.AspNet.OAuth2Introspection;
+using IdentityModel.AspNetCore.OAuth2Introspection;
 using System;
 using System.Net.Http;
 using Tests.Util;
