@@ -3,6 +3,7 @@
 
 using FluentAssertions;
 using IdentityModel.AspNet.OAuth2Introspection;
+using Microsoft.AspNetCore.Builder;
 using System;
 using System.Net.Http;
 using Tests.Util;

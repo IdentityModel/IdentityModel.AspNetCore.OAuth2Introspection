@@ -2,13 +2,15 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using IdentityModel.Client;
-using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Builder;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.WebEncoders;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.Encodings.Web;
 
 namespace IdentityModel.AspNet.OAuth2Introspection
 {
@@ -16,26 +18,26 @@ namespace IdentityModel.AspNet.OAuth2Introspection
     {
         Lazy<IntrospectionClient> _client;
 
-        public OAuth2IntrospectionMiddleware(RequestDelegate next, OAuth2IntrospectionOptions options, IUrlEncoder urlEncoder, ILoggerFactory loggerFactory)
+        public OAuth2IntrospectionMiddleware(RequestDelegate next, IOptions<OAuth2IntrospectionOptions> options, UrlEncoder urlEncoder, ILoggerFactory loggerFactory)
             : base(next, options, loggerFactory, urlEncoder)
         {
-            if (options.Authority.IsMissing() && options.IntrospectionEndpoint.IsMissing())
+            if (options.Value.Authority.IsMissing() && options.Value.IntrospectionEndpoint.IsMissing())
             {
                 throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
             }
 
-            if (options.ScopeName.IsMissing() && options.IntrospectionHttpHandler == null)
+            if (options.Value.ScopeName.IsMissing() && options.Value.IntrospectionHttpHandler == null)
             {
                 throw new InvalidOperationException("You must either set a ScopeName or set an introspection HTTP handler");
             }
 
-            if (options.TokenRetriever == null)
+            if (options.Value.TokenRetriever == null)
             {
-                throw new ArgumentException("TokenRetriever must be set", nameof(options.TokenRetriever));
+                throw new ArgumentException("TokenRetriever must be set", nameof(options.Value.TokenRetriever));
             }
 
             _client = new Lazy<IntrospectionClient>(InitializeIntrospectionClient);
-            if (options.DelayLoadDiscoveryDocument == false)
+            if (options.Value.DelayLoadDiscoveryDocument == false)
             {
                 var temp = _client.Value;
             }

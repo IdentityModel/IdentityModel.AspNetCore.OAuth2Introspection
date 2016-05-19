@@ -1,12 +1,12 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Http;
 using System;
 using System.Net.Http;
+using Microsoft.AspNetCore.Http;
+using IdentityModel.AspNet.OAuth2Introspection;
 
-namespace IdentityModel.AspNet.OAuth2Introspection
+namespace Microsoft.AspNetCore.Builder
 {
     /// <summary>
     /// Options class for the OAuth 2.0 introspection endpoint authentication middleware

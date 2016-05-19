@@ -2,8 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using IdentityModel.Client;
-using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Http.Authentication;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Authentication;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -26,12 +27,12 @@ namespace IdentityModel.AspNet.OAuth2Introspection
 
             if (token.IsMissing())
             {
-                return AuthenticateResult.Failed("No bearer token.");
+                return AuthenticateResult.Fail("No bearer token.");
             }
 
             if (token.Contains('.') && Options.SkipTokensWithDots)
             {
-                return AuthenticateResult.Failed("Token contains a dot. Skipping.");
+                return AuthenticateResult.Fail("Token contains a dot. Skipping.");
             }
 
             var response = await _client.SendAsync(new IntrospectionRequest
@@ -43,7 +44,7 @@ namespace IdentityModel.AspNet.OAuth2Introspection
 
             if (response.IsError)
             {
-                return AuthenticateResult.Failed("Error returned from introspection: " + response.Error);
+                return AuthenticateResult.Fail("Error returned from introspection: " + response.Error);
             }
 
             if (response.IsActive)
@@ -64,7 +65,7 @@ namespace IdentityModel.AspNet.OAuth2Introspection
                 return AuthenticateResult.Success(ticket);
             }
 
-            return AuthenticateResult.Failed("invalid token.");
+            return AuthenticateResult.Fail("invalid token.");
         }
     }
 }
