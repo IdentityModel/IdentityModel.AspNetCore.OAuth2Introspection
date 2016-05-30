@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -91,8 +92,8 @@ namespace IdentityModel.AspNet.OAuth2Introspection
             var discoEndpoint = Options.Authority.EnsureTrailingSlash() + ".well-known/openid-configuration";
             var response = AsyncHelper.RunSync<string>(() => client.GetStringAsync(discoEndpoint));
 
-            var json = (IDictionary<string, object>)SimpleJson.SimpleJson.DeserializeObject(response);
-            return (string)json["introspection_endpoint"];
+            var json = JObject.Parse(response);
+            return json["introspection_endpoint"].ToString();
         }
 
         protected override AuthenticationHandler<OAuth2IntrospectionOptions> CreateHandler()
