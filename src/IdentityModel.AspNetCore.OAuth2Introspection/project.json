@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-beta5",
+  "version": "1.0.0-beta6",
   "description": "ASP.NET Core Middleware for validating tokens using OAuth 2.0 introspection",
   "authors": [ "Dominick Baier", "Brock Allen" ],
 
@@ -13,7 +13,6 @@
       "url": "git://github.com/identitymodel/identitymodel.aspnetcore.oauth2introspection"
     }
   },
-
 
   "dependencies": {
     "Microsoft.AspNetCore.Authentication": "1.0.0-rc2-final",

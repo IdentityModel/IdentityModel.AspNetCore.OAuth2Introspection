@@ -27,12 +27,12 @@ namespace IdentityModel.AspNet.OAuth2Introspection
 
             if (token.IsMissing())
             {
-                return AuthenticateResult.Fail("No bearer token.");
+                return AuthenticateResult.Skip();
             }
 
             if (token.Contains('.') && Options.SkipTokensWithDots)
             {
-                return AuthenticateResult.Fail("Token contains a dot. Skipping.");
+                return AuthenticateResult.Skip();
             }
 
             var response = await _client.SendAsync(new IntrospectionRequest
@@ -44,7 +44,7 @@ namespace IdentityModel.AspNet.OAuth2Introspection
 
             if (response.IsError)
             {
-                return AuthenticateResult.Fail("Error returned from introspection: " + response.Error);
+                return AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error);
             }
 
             if (response.IsActive)
@@ -53,19 +53,24 @@ namespace IdentityModel.AspNet.OAuth2Introspection
                     .Where(c => c.Item1 != "active")
                     .Select(c => new Claim(c.Item1, c.Item2)));
 
-                if (Options.SaveTokensAsClaims)
-                {
-                    claims.Add(new Claim("access_token", token));
-                }
-
                 var id = new ClaimsIdentity(claims, Options.AuthenticationScheme, Options.NameClaimType, Options.RoleClaimType);
                 var principal = new ClaimsPrincipal(id);
-
                 var ticket = new AuthenticationTicket(principal, new AuthenticationProperties(), Options.AuthenticationScheme);
+
+                if (Options.SaveToken)
+                {
+                    ticket.Properties.StoreTokens(new[]
+                        {
+                            new AuthenticationToken { Name = "access_token", Value = token }
+                        });
+                }
+
                 return AuthenticateResult.Success(ticket);
             }
-
-            return AuthenticateResult.Fail("invalid token.");
+            else
+            {
+                return AuthenticateResult.Fail("Token is not active.");
+            }
         }
     }
 }

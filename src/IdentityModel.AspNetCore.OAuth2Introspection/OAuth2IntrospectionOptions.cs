@@ -83,7 +83,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <summary>
         /// Specifies whether the token should be added as claim called 'token' to the principal 
         /// </summary>
-        public bool SaveTokensAsClaims { get; set; } = false;
+        public bool SaveToken { get; set; } = true;
 
         /// <summary>
         /// Specifies the method how to retrieve the token from the HTTP request
