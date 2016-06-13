@@ -1,8 +1,8 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+
 using FluentAssertions;
-using IdentityModel.AspNet.OAuth2Introspection;
 using Microsoft.AspNetCore.Builder;
 using System.Net;
 using System.Net.Http;

@@ -1,10 +1,11 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+
 using System;
 using System.Net.Http;
 using Microsoft.AspNetCore.Http;
-using IdentityModel.AspNet.OAuth2Introspection;
+using IdentityModel.AspNetCore.OAuth2Introspection;
 
 namespace Microsoft.AspNetCore.Builder
 {
@@ -81,9 +82,19 @@ namespace Microsoft.AspNetCore.Builder
         public bool SkipTokensWithDots { get; set; } = true;
 
         /// <summary>
-        /// Specifies whether the token should be added as claim called 'token' to the principal 
+        /// Specifies whether the token should be stored
         /// </summary>
         public bool SaveToken { get; set; } = true;
+
+        /// <summary>
+        /// Specifies whether the outcome of the toke validation should be cached. This reduces the load on the introspection endpoint at the STS
+        /// </summary>
+        public bool EnableCaching { get; set; } = false;
+
+        /// <summary>
+        /// Specifies for how long the outcome of the token validation should be cached.
+        /// </summary>
+        public TimeSpan CacheDuration { get; set; } = TimeSpan.FromMinutes(10);
 
         /// <summary>
         /// Specifies the method how to retrieve the token from the HTTP request

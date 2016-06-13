@@ -1,8 +1,8 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+
 using FluentAssertions;
-using IdentityModel.AspNet.OAuth2Introspection;
 using Microsoft.AspNetCore.Builder;
 using System;
 using System.Net.Http;
@@ -57,6 +57,31 @@ namespace AccessTokenValidation.Tests.Integration_Tests
             Action act = () => PipelineFactory.CreateClient(_options);
 
             act.ShouldNotThrow();
+        }
+
+        [Fact]
+        public void Caching_With_Caching_Service()
+        {
+            _options.IntrospectionEndpoint = "http://endpoint";
+            _options.ScopeName = "scope";
+            _options.EnableCaching = true;
+
+            Action act = () => PipelineFactory.CreateClient(_options, addCaching: true);
+
+            act.ShouldNotThrow();
+        }
+
+        [Fact]
+        public void Caching_Without_Caching_Service()
+        {
+            _options.IntrospectionEndpoint = "http://endpoint";
+            _options.ScopeName = "scope";
+            _options.EnableCaching = true;
+
+            Action act = () => PipelineFactory.CreateClient(_options);
+
+            act.ShouldThrow<ArgumentException>()
+                .Where(e => e.Message.StartsWith("Caching is enabled, but no cache is found in the services collection"));
         }
 
         [Fact]

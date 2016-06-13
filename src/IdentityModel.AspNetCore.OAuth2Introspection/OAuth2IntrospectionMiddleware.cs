@@ -5,21 +5,22 @@ using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Encodings.Web;
 
-namespace IdentityModel.AspNet.OAuth2Introspection
+namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     public class OAuth2IntrospectionMiddleware : AuthenticationMiddleware<OAuth2IntrospectionOptions>
     {
         Lazy<IntrospectionClient> _client;
+        private readonly IDistributedCache _cache;
 
-        public OAuth2IntrospectionMiddleware(RequestDelegate next, IOptions<OAuth2IntrospectionOptions> options, UrlEncoder urlEncoder, ILoggerFactory loggerFactory)
+        public OAuth2IntrospectionMiddleware(RequestDelegate next, IOptions<OAuth2IntrospectionOptions> options, UrlEncoder urlEncoder, ILoggerFactory loggerFactory, IDistributedCache cache = null)
             : base(next, options, loggerFactory, urlEncoder)
         {
             if (options.Value.Authority.IsMissing() && options.Value.IntrospectionEndpoint.IsMissing())
@@ -37,7 +38,14 @@ namespace IdentityModel.AspNet.OAuth2Introspection
                 throw new ArgumentException("TokenRetriever must be set", nameof(options.Value.TokenRetriever));
             }
 
+            if (options.Value.EnableCaching == true && cache == null)
+            {
+                throw new ArgumentException("Caching is enabled, but no cache is found in the services collection", nameof(cache));
+            }
+
+            _cache = cache;
             _client = new Lazy<IntrospectionClient>(InitializeIntrospectionClient);
+
             if (options.Value.DelayLoadDiscoveryDocument == false)
             {
                 var temp = _client.Value;
@@ -98,7 +106,7 @@ namespace IdentityModel.AspNet.OAuth2Introspection
 
         protected override AuthenticationHandler<OAuth2IntrospectionOptions> CreateHandler()
         {
-            return new OAuth2IntrospectionHandler(_client.Value);
+            return new OAuth2IntrospectionHandler(_client.Value, _cache);
         }
     }
 }

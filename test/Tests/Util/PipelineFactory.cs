@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
@@ -12,9 +13,10 @@ namespace Tests.Util
 {
     class PipelineFactory
     {
-        public static TestServer CreateServer(OAuth2IntrospectionOptions options)
+        public static TestServer CreateServer(OAuth2IntrospectionOptions options, bool addCaching = false)
         {
-            return new TestServer(new WebHostBuilder().Configure(app =>
+            return new TestServer(new WebHostBuilder()
+                .Configure(app =>
                 {
                     app.UseOAuth2IntrospectionAuthentication(options);
 
@@ -36,18 +38,23 @@ namespace Tests.Util
                 }) 
                 .ConfigureServices(services =>
                 {
+                    if (addCaching)
+                    {
+                        services.AddDistributedMemoryCache();
+                    }
+
                     services.AddAuthentication();
                 }));
         }
 
-        public static HttpClient CreateClient(OAuth2IntrospectionOptions options)
+        public static HttpClient CreateClient(OAuth2IntrospectionOptions options, bool addCaching = false)
         {
-            return CreateServer(options).CreateClient();
+            return CreateServer(options, addCaching).CreateClient();
         }
 
-        public static HttpMessageHandler CreateHandler(OAuth2IntrospectionOptions options)
+        public static HttpMessageHandler CreateHandler(OAuth2IntrospectionOptions options, bool addCaching = false)
         {
-            return CreateServer(options).CreateHandler();
+            return CreateServer(options, addCaching).CreateHandler();
         }
     }
 }

@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IdentityModel.AspNet.OAuth2Introspection
+namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     internal static class AsyncHelper
     {
