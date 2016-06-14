@@ -19,10 +19,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     {
         Lazy<IntrospectionClient> _client;
         private readonly IDistributedCache _cache;
+        private readonly ILoggerFactory _loggerFactory;
 
         public OAuth2IntrospectionMiddleware(RequestDelegate next, IOptions<OAuth2IntrospectionOptions> options, UrlEncoder urlEncoder, ILoggerFactory loggerFactory, IDistributedCache cache = null)
             : base(next, options, loggerFactory, urlEncoder)
         {
+            _loggerFactory = loggerFactory;
+
             if (options.Value.Authority.IsMissing() && options.Value.IntrospectionEndpoint.IsMissing())
             {
                 throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
@@ -106,7 +109,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         protected override AuthenticationHandler<OAuth2IntrospectionOptions> CreateHandler()
         {
-            return new OAuth2IntrospectionHandler(_client.Value, _cache);
+            return new OAuth2IntrospectionHandler(_client.Value, _loggerFactory, _cache);
         }
     }
 }

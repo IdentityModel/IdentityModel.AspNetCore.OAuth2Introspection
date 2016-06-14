@@ -3,6 +3,7 @@
 
 
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -29,24 +30,31 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return tuples.ToClaims();
         }
 
-        public static async Task SetTuplesAsync(this IDistributedCache cache, string token, IEnumerable<Tuple<string, string>> claims, TimeSpan duration)
+        public static async Task SetTuplesAsync(this IDistributedCache cache, string token, IEnumerable<Tuple<string, string>> claims, TimeSpan duration, ILogger logger)
         {
-            var expClaim = claims.First(c => c.Item1 == JwtClaimTypes.Expiration).Item2;
-            var expiration = long.Parse(expClaim).ToDateTimeOffsetFromEpoch();
+            var expClaim = claims.FirstOrDefault(c => c.Item1 == JwtClaimTypes.Expiration);
+            if (expClaim == null)
+            {
+                logger.LogInformation("No exp claim found on introspection response, can't cache.");
+                return;
+            }
 
-            if (expiration < DateTimeOffset.Now)
+            var expiration = long.Parse(expClaim.Item2).ToDateTimeOffsetFromEpoch();
+            var now = DateTimeOffset.UtcNow;
+
+            if (expiration <= now)
             {
                 return;
             }
 
             DateTimeOffset absoluteLifetime;
-            if (expiration <= DateTimeOffset.Now.Add(duration))
+            if (expiration <= now.Add(duration))
             {
                 absoluteLifetime = expiration;
             }
             else
             {
-                absoluteLifetime = DateTimeOffset.Now.Add(duration);
+                absoluteLifetime = now.Add(duration);
             }
 
             var json = JsonConvert.SerializeObject(claims);

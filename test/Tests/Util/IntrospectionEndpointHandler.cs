@@ -22,11 +22,17 @@ namespace Tests.Util
             Unauthorized
         }
 
+        public Dictionary<string, object> AdditionalValues { get; set; } = new Dictionary<string, object>();
         public string Endpoint { get; set; }
 
-        public IntrospectionEndpointHandler(Behavior behavior)
+        public IntrospectionEndpointHandler(Behavior behavior, TimeSpan? ttl = null)
         {
             _behavior = behavior;
+
+            if (ttl.HasValue)
+            {
+                AdditionalValues.Add("exp", DateTimeOffset.UtcNow.Add(ttl.Value).ToUnixTimeSeconds());
+            }
         }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -44,6 +50,11 @@ namespace Tests.Util
                 {
                     { "active", true }
                 };
+
+                foreach (var item in AdditionalValues)
+                {
+                    responseObject.Add(item.Key, item.Value);
+                }
 
                 var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
 

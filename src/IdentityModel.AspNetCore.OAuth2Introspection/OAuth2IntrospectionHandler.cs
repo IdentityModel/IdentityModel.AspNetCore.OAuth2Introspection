@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -18,10 +19,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     {
         private readonly IDistributedCache _cache;
         private readonly IntrospectionClient _client;
+        private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
-        public OAuth2IntrospectionHandler(IntrospectionClient client, IDistributedCache cache)
+        public OAuth2IntrospectionHandler(IntrospectionClient client, ILoggerFactory loggerFactory, IDistributedCache cache)
         {
             _client = client;
+            _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
             _cache = cache;
         }
 
@@ -74,7 +77,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 if (Options.EnableCaching)
                 {
-                    await _cache.SetTuplesAsync(token, response.Claims, Options.CacheDuration);
+                    await _cache.SetTuplesAsync(token, response.Claims, Options.CacheDuration, _logger);
                 }
 
                 return AuthenticateResult.Success(ticket);
