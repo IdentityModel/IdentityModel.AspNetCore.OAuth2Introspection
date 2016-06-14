@@ -39,6 +39,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (token.Contains('.') && Options.SkipTokensWithDots)
             {
+                _logger.LogTrace("Token contains a dot - skipped because SkipTokensWithDots is set.");
                 return AuthenticateResult.Skip();
             }
 
@@ -47,8 +48,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 var claims = await _cache.GetClaimsAsync(token);
                 if (claims != null)
                 {
+                    _logger.LogTrace("Token found in cache.");
                     return AuthenticateResult.Success(CreateTicket(claims));
                 }
+
+                _logger.LogTrace("Token is not cached.");
             }
 
             var response = await _client.SendAsync(new IntrospectionRequest
