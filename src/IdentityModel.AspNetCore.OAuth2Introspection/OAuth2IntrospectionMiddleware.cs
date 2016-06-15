@@ -101,10 +101,26 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             client.Timeout = Options.DiscoveryTimeout;
 
             var discoEndpoint = Options.Authority.EnsureTrailingSlash() + ".well-known/openid-configuration";
-            var response = AsyncHelper.RunSync<string>(() => client.GetStringAsync(discoEndpoint));
 
-            var json = JObject.Parse(response);
-            return json["introspection_endpoint"].ToString();
+            string response;
+            try
+            {
+                response = AsyncHelper.RunSync<string>(() => client.GetStringAsync(discoEndpoint));
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Discovery endpoint {discoEndpoint} is unavailable: {ex.ToString()}");
+            }
+
+            try
+            {
+                var json = JObject.Parse(response);
+                return json["introspection_endpoint"].ToString();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error parsing discovery document from {discoEndpoint}: {ex.ToString()}");
+            }
         }
 
         protected override AuthenticationHandler<OAuth2IntrospectionOptions> CreateHandler()
