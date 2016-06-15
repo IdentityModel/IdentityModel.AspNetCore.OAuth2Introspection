@@ -105,7 +105,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
 
             Action act = () => PipelineFactory.CreateClient(_options);
 
-            act.ShouldThrow<HttpRequestException>();
+            act.ShouldThrow<InvalidOperationException>();
         }
 
         [Fact]
