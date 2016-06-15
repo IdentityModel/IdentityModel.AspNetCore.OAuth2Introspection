@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-beta8",
+  "version": "1.0.0-beta9",
   "description": "ASP.NET Core Middleware for validating tokens using OAuth 2.0 introspection",
   "authors": [ "Dominick Baier", "Brock Allen" ],
 
