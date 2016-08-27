@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -69,7 +68,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (response.IsActive)
             {
-                var ticket = CreateTicket(response.Claims.ToClaims());
+                var ticket = CreateTicket(response.Claims);
 
                 if (Options.SaveToken)
                 {
@@ -81,7 +80,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 if (Options.EnableCaching)
                 {
-                    await _cache.SetTuplesAsync(token, response.Claims, Options.CacheDuration, _logger);
+                    await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger);
                 }
 
                 return AuthenticateResult.Success(ticket);
@@ -92,7 +91,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
         }
 
-        private AuthenticationTicket CreateTicket(List<Claim> claims)
+        private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
         {
             var id = new ClaimsIdentity(claims, Options.AuthenticationScheme, Options.NameClaimType, Options.RoleClaimType);
             var principal = new ClaimsPrincipal(id);

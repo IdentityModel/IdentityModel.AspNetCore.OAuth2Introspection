@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -16,7 +15,15 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     internal static class CacheExtensions
     {
-        public static async Task<List<Claim>> GetClaimsAsync(this IDistributedCache cache, string token)
+        internal static JsonSerializerSettings _settings;
+
+        static CacheExtensions()
+        {
+            _settings = new JsonSerializerSettings();
+            _settings.Converters.Add(new ClaimConverter());
+        }
+
+        public static async Task<IEnumerable<Claim>> GetClaimsAsync(this IDistributedCache cache, string token)
         {
             var bytes = await cache.GetAsync(token);
 
@@ -26,13 +33,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             var json = Encoding.UTF8.GetString(bytes);
-            var tuples = JsonConvert.DeserializeObject<IEnumerable<Tuple<string, string>>>(json);
-            return tuples.ToClaims();
+            return JsonConvert.DeserializeObject<IEnumerable<Claim>>(json, _settings);
         }
 
-        public static async Task SetTuplesAsync(this IDistributedCache cache, string token, IEnumerable<Tuple<string, string>> claims, TimeSpan duration, ILogger logger)
+        public static async Task SetClaimsAsync(this IDistributedCache cache, string token, IEnumerable<Claim> claims, TimeSpan duration, ILogger logger)
         {
-            var expClaim = claims.FirstOrDefault(c => c.Item1 == JwtClaimTypes.Expiration);
+            var expClaim = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Expiration);
             if (expClaim == null)
             {
                 logger.LogWarning("No exp claim found on introspection response, can't cache.");
@@ -40,7 +46,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             var now = DateTimeOffset.UtcNow;
-            var expiration = long.Parse(expClaim.Item2).ToDateTimeOffsetFromEpoch();
+            var expiration = long.Parse(expClaim.Value).ToDateTimeOffsetFromEpoch();
             logger.LogDebug("Token will expire in {expiration}", expiration);
             
 
@@ -59,7 +65,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 absoluteLifetime = now.Add(duration);
             }
 
-            var json = JsonConvert.SerializeObject(claims);
+            var json = JsonConvert.SerializeObject(claims, _settings);
             var bytes = Encoding.UTF8.GetBytes(json);
 
             logger.LogDebug("Setting cache item expiration to {expiration}", absoluteLifetime);
