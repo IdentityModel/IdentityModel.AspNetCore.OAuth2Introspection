@@ -3,10 +3,10 @@ branches:
   only:
   - dev
 build_script:
-- cmd: build.cmd
+- ps: .\build.ps1
 test: off
 artifacts:
-- path: artifacts/packages/release/*.nupkg
+- path: artifacts/packages/*.nupkg
 deploy:
 - provider: NuGet
   server: https://www.myget.org/F/identity/
