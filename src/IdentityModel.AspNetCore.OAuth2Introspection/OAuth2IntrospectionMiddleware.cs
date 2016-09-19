@@ -1,6 +1,11 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System;
+using System.Net.Http;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
+using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -9,15 +14,12 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Net.Http;
-using System.Text.Encodings.Web;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     public class OAuth2IntrospectionMiddleware : AuthenticationMiddleware<OAuth2IntrospectionOptions>
     {
-        Lazy<IntrospectionClient> _client;
+        LazyAsync<IntrospectionClient> _client;
         private readonly IDistributedCache _cache;
         private readonly ILoggerFactory _loggerFactory;
 
@@ -47,15 +49,15 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             _cache = cache;
-            _client = new Lazy<IntrospectionClient>(InitializeIntrospectionClient);
+            _client = new LazyAsync<IntrospectionClient>(InitializeIntrospectionClient);
 
             if (options.Value.DelayLoadDiscoveryDocument == false)
             {
-                var temp = _client.Value;
+                var temp = _client.GetValue();
             }
         }
 
-        private IntrospectionClient InitializeIntrospectionClient()
+        private async Task<IntrospectionClient> InitializeIntrospectionClient()
         {
             string endpoint;
 
@@ -65,7 +67,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
             else
             {
-                endpoint = GetIntrospectionEndpointFromDiscoveryDocument();
+                endpoint = await GetIntrospectionEndpointFromDiscoveryDocument().ConfigureAwait(false);
                 Options.IntrospectionEndpoint = endpoint;
             }
 
@@ -85,7 +87,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return client;
         }
 
-        private string GetIntrospectionEndpointFromDiscoveryDocument()
+        private async Task<string> GetIntrospectionEndpointFromDiscoveryDocument()
         {
             HttpClient client;
 
@@ -105,7 +107,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             string response;
             try
             {
-                response = AsyncHelper.RunSync<string>(() => client.GetStringAsync(discoEndpoint));
+                response = await client.GetStringAsync(discoEndpoint).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -125,7 +127,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         protected override AuthenticationHandler<OAuth2IntrospectionOptions> CreateHandler()
         {
-            return new OAuth2IntrospectionHandler(_client.Value, _loggerFactory, _cache);
+            return new OAuth2IntrospectionHandler(_client, _loggerFactory, _cache);
         }
     }
 }

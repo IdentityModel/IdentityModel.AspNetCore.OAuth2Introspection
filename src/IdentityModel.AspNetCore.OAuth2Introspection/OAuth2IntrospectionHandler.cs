@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using IdentityModel.Client;
+using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Authentication;
@@ -17,10 +18,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2IntrospectionOptions>
     {
         private readonly IDistributedCache _cache;
-        private readonly IntrospectionClient _client;
+        private readonly LazyAsync<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
-        public OAuth2IntrospectionHandler(IntrospectionClient client, ILoggerFactory loggerFactory, IDistributedCache cache)
+        public OAuth2IntrospectionHandler(LazyAsync<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache)
         {
             _client = client;
             _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
@@ -54,7 +55,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 _logger.LogTrace("Token is not cached.");
             }
 
-            var response = await _client.SendAsync(new IntrospectionRequest
+            var introspectionClient = await _client.GetValue();
+
+            var response = await introspectionClient.SendAsync(new IntrospectionRequest
             {
                 Token = token,
                 ClientId = Options.ScopeName,
