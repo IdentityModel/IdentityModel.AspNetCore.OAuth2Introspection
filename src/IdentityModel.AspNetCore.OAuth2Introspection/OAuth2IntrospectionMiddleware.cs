@@ -53,7 +53,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (options.Value.DelayLoadDiscoveryDocument == false)
             {
-                var temp = _client.GetValue();
+                _client.GetValue().Wait();
             }
         }
 
