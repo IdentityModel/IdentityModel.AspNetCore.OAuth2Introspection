@@ -25,7 +25,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         public static async Task<IEnumerable<Claim>> GetClaimsAsync(this IDistributedCache cache, string token)
         {
-            var bytes = await cache.GetAsync(token);
+            var bytes = await cache.GetAsync(token).ConfigureAwait(false);
 
             if (bytes == null)
             {
@@ -69,7 +69,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             var bytes = Encoding.UTF8.GetBytes(json);
 
             logger.LogDebug("Setting cache item expiration to {expiration}", absoluteLifetime);
-            await cache.SetAsync(token, bytes, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteLifetime });
+            await cache.SetAsync(token, bytes, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteLifetime }).ConfigureAwait(false);
         }
     }
 }

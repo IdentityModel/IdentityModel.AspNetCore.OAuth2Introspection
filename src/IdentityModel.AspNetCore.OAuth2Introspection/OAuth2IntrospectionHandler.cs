@@ -45,7 +45,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (Options.EnableCaching)
             {
-                var claims = await _cache.GetClaimsAsync(token);
+                var claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
                 if (claims != null)
                 {
                     _logger.LogTrace("Token found in cache.");
@@ -55,14 +55,14 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 _logger.LogTrace("Token is not cached.");
             }
 
-            var introspectionClient = await _client.GetValue();
+            var introspectionClient = await _client.GetValue().ConfigureAwait(false);
 
             var response = await introspectionClient.SendAsync(new IntrospectionRequest
             {
                 Token = token,
                 ClientId = Options.ScopeName,
                 ClientSecret = Options.ScopeSecret
-            });
+            }).ConfigureAwait(false);
 
             if (response.IsError)
             {
@@ -83,7 +83,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 if (Options.EnableCaching)
                 {
-                    await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger);
+                    await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                 }
 
                 return AuthenticateResult.Success(ticket);
