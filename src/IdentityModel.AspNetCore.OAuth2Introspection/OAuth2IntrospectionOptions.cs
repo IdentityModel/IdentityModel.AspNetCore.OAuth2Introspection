@@ -27,11 +27,6 @@ namespace Microsoft.AspNetCore.Builder
         public string Authority { get; set; }
 
         /// <summary>
-        /// Specifies if the discover document get loaded at startup time, or during the first request.
-        /// </summary>
-        public bool DelayLoadDiscoveryDocument { get; set; } = true;
-
-        /// <summary>
         /// Sets the URL of the introspection endpoint.
         /// If set, Authority is ignored.
         /// </summary>

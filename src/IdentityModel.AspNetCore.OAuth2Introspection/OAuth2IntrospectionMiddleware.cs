@@ -50,11 +50,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             _cache = cache;
             _client = new LazyAsync<IntrospectionClient>(InitializeIntrospectionClient);
-
-            if (options.Value.DelayLoadDiscoveryDocument == false)
-            {
-                _client.GetValue().Wait();
-            }
         }
 
         private async Task<IntrospectionClient> InitializeIntrospectionClient()

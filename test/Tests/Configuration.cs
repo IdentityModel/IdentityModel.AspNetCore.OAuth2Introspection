@@ -6,6 +6,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using System;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;
 
@@ -89,23 +90,10 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         {
             _options.IntrospectionEndpoint = "http://endpoint";
             _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-            _options.DelayLoadDiscoveryDocument = false;
 
             Action act = () => PipelineFactory.CreateClient(_options);
 
             act.ShouldNotThrow();
-        }
-
-        [Fact]
-        public void Authority_No_Network()
-        {
-            _options.Authority = "http://localhost:6666";
-            _options.ScopeName = "scope";
-            _options.DelayLoadDiscoveryDocument = false;
-
-            Action act = () => PipelineFactory.CreateClient(_options);
-
-            act.ShouldThrow<InvalidOperationException>();
         }
 
         [Fact]
@@ -113,7 +101,6 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         {
             _options.Authority = "http://localhost:6666";
             _options.ScopeName = "scope";
-            _options.DelayLoadDiscoveryDocument = true;
 
             Action act = () => PipelineFactory.CreateClient(_options);
 
@@ -121,50 +108,50 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         }
 
         [Fact]
-        public void Authority_No_Trailing_Slash()
+        public async Task Authority_No_Trailing_Slash()
         {
             _options.Authority = "http://authority.com";
             _options.ScopeName = "scope";
-            _options.DelayLoadDiscoveryDocument = false;
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;
 
-            Action act = () => PipelineFactory.CreateClient(_options);
+            var client = PipelineFactory.CreateClient(_options);
+            client.SetBearerToken("token");
+            var response = await client.GetAsync("http://server/api");
 
-            act.ShouldNotThrow();
             handler.Endpoint.Should().Be("http://authority.com/.well-known/openid-configuration");
         }
 
         [Fact]
-        public void Authority_Trailing_Slash()
+        public async Task Authority_Trailing_Slash()
         {
             _options.Authority = "http://authority.com/";
             _options.ScopeName = "scope";
-            _options.DelayLoadDiscoveryDocument = false;
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;
 
-            Action act = () => PipelineFactory.CreateClient(_options);
+            var client  = PipelineFactory.CreateClient(_options);
+            client.SetBearerToken("token");
+            var response = await client.GetAsync("http://server/api");
 
-            act.ShouldNotThrow();
             handler.Endpoint.Should().Be("http://authority.com/.well-known/openid-configuration");
         }
 
         [Fact]
-        public void Authority_Get_Introspection_Endpoint()
+        public async Task Authority_Get_Introspection_Endpoint()
         {
             _options.Authority = "http://authority.com/";
             _options.ScopeName = "scope";
-            _options.DelayLoadDiscoveryDocument = false;
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;
 
-            Action act = () => PipelineFactory.CreateClient(_options);
+            var client = PipelineFactory.CreateClient(_options);
+            client.SetBearerToken("token");
+            var response = await client.GetAsync("http://server/api");
 
-            act.ShouldNotThrow();
             _options.IntrospectionEndpoint.Should().Be("http://introspection_endpoint");
         }
     }

@@ -55,7 +55,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 _logger.LogTrace("Token is not cached.");
             }
 
-            var introspectionClient = await _client.GetValue().ConfigureAwait(false);
+            var introspectionClient = await _client.GetValueAsync().ConfigureAwait(false);
 
             var response = await introspectionClient.SendAsync(new IntrospectionRequest
             {

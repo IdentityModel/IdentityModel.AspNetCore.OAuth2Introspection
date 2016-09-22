@@ -15,19 +15,24 @@ namespace Tests.Util
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
         {
-            Endpoint = request.RequestUri.AbsoluteUri;
-
-            var data = new Dictionary<string, object>
+            if (request.RequestUri.AbsoluteUri.ToString() == "http://authority.com/.well-known/openid-configuration")
             {
-                { "introspection_endpoint", "http://introspection_endpoint" }
-            };
+                Endpoint = request.RequestUri.AbsoluteUri;
 
-            var json = SimpleJson.SimpleJson.SerializeObject(data);
+                var data = new Dictionary<string, object>
+                {
+                    { "introspection_endpoint", "http://introspection_endpoint" }
+                };
 
-            var response = new HttpResponseMessage(HttpStatusCode.OK);
-            response.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                var json = SimpleJson.SimpleJson.SerializeObject(data);
 
-            return Task.FromResult(response);
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+                response.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                return Task.FromResult(response);
+            }
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
         }
     }
 }

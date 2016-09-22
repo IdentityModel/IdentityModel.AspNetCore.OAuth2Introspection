@@ -18,7 +18,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         {
             AutomaticAuthenticate = true,
 
-            Authority = "http://server",
+            Authority = "http://authority.com",
             DiscoveryHttpHandler = new DiscoveryEndpointHandler(),
 
             ScopeName = "scope",

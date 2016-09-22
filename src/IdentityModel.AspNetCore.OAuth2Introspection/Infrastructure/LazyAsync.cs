@@ -18,7 +18,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
             _valueFactory = valueFactory;
         }
 
-        public async Task<T> GetValue()
+        public async Task<T> GetValueAsync()
         {
             if (_value != null)
             {
