@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using IdentityModel.Client;
+using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Authentication;
@@ -17,10 +18,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2IntrospectionOptions>
     {
         private readonly IDistributedCache _cache;
-        private readonly IntrospectionClient _client;
+        private readonly LazyAsync<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
-        public OAuth2IntrospectionHandler(IntrospectionClient client, ILoggerFactory loggerFactory, IDistributedCache cache)
+        public OAuth2IntrospectionHandler(LazyAsync<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache)
         {
             _client = client;
             _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
@@ -44,7 +45,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (Options.EnableCaching)
             {
-                var claims = await _cache.GetClaimsAsync(token);
+                var claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
                 if (claims != null)
                 {
                     _logger.LogTrace("Token found in cache.");
@@ -54,12 +55,14 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 _logger.LogTrace("Token is not cached.");
             }
 
-            var response = await _client.SendAsync(new IntrospectionRequest
+            var introspectionClient = await _client.GetValue().ConfigureAwait(false);
+
+            var response = await introspectionClient.SendAsync(new IntrospectionRequest
             {
                 Token = token,
                 ClientId = Options.ScopeName,
                 ClientSecret = Options.ScopeSecret
-            });
+            }).ConfigureAwait(false);
 
             if (response.IsError)
             {
@@ -80,7 +83,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 if (Options.EnableCaching)
                 {
-                    await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger);
+                    await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                 }
 
                 return AuthenticateResult.Success(ticket);
