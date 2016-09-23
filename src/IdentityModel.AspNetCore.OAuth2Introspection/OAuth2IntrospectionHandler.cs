@@ -20,6 +20,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly IDistributedCache _cache;
         private readonly LazyAsync<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
+        private static readonly KeyedSemaphore _keyedSemaphore = new KeyedSemaphore();
 
         public OAuth2IntrospectionHandler(LazyAsync<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache)
         {
@@ -53,8 +54,38 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 }
 
                 _logger.LogTrace("Token is not cached.");
+
+                // We actually need to go and fetch the claims from the server because we don't have them cached.
+                // It would be wasteful if we sent a request and another thread is already doing it.
+                // If that's the case we'll wait here.
+                var release = await _keyedSemaphore.WaitForKey(token).ConfigureAwait(false);
+
+                // Let's check the cache again in case the last thread populated it
+                claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
+                if (claims != null)
+                {
+                    return AuthenticateResult.Success(CreateTicket(claims));
+                }
+
+                try
+                {
+                    var response = await GetClaims(token).ConfigureAwait(false);
+                    await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                    return response.AuthenticateResult;
+                }
+                finally
+                {
+                    release.Release();
+                }
             }
 
+            // Caching is turned off, lets fetch the claims fresh every time
+            var claimsResponse = await GetClaims(token).ConfigureAwait(false);
+            return claimsResponse.AuthenticateResult;
+        }
+
+        private async Task<ClaimsResponse> GetClaims(string token)
+        {
             var introspectionClient = await _client.GetValueAsync().ConfigureAwait(false);
 
             var response = await introspectionClient.SendAsync(new IntrospectionRequest
@@ -66,7 +97,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (response.IsError)
             {
-                return AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error);
+                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error), Claims = response.Claims };
             }
 
             if (response.IsActive)
@@ -86,11 +117,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                     await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                 }
 
-                return AuthenticateResult.Success(ticket);
+                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Success(ticket), Claims = response.Claims };
             }
             else
             {
-                return AuthenticateResult.Fail("Token is not active.");
+                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Fail("Token is not active."), Claims = response.Claims };
             }
         }
 
@@ -100,6 +131,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             var principal = new ClaimsPrincipal(id);
 
             return new AuthenticationTicket(principal, new AuthenticationProperties(), Options.AuthenticationScheme);
+        }
+        private class ClaimsResponse
+        {
+            public AuthenticateResult AuthenticateResult;
+            public IEnumerable<Claim> Claims;
         }
     }
 }
