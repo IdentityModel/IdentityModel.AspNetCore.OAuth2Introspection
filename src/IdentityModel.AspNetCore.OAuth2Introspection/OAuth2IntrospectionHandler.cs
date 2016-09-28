@@ -70,7 +70,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 try
                 {
                     var response = await GetClaims(token).ConfigureAwait(false);
-                    await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                    if (response.AuthenticateResult.Succeeded)
+                    {
+                        await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                    }
                     return response.AuthenticateResult;
                 }
                 finally
@@ -97,7 +100,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (response.IsError)
             {
-                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error), Claims = response.Claims };
+                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error) };
             }
 
             if (response.IsActive)
@@ -107,21 +110,16 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 if (Options.SaveToken)
                 {
                     ticket.Properties.StoreTokens(new[]
-                        {
-                            new AuthenticationToken { Name = "access_token", Value = token }
-                        });
-                }
-
-                if (Options.EnableCaching)
-                {
-                    await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                    {
+                        new AuthenticationToken { Name = "access_token", Value = token }
+                    });
                 }
 
                 return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Success(ticket), Claims = response.Claims };
             }
             else
             {
-                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Fail("Token is not active."), Claims = response.Claims };
+                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Fail("Token is not active.") };
             }
         }
 
