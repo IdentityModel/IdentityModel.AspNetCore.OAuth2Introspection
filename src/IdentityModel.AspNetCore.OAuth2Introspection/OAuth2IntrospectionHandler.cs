@@ -60,15 +60,15 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 // If that's the case we'll wait here.
                 var release = await _keyedSemaphore.WaitForKey(token).ConfigureAwait(false);
 
-                // Let's check the cache again in case the last thread populated it
-                claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
-                if (claims != null)
-                {
-                    return AuthenticateResult.Success(CreateTicket(claims));
-                }
-
                 try
                 {
+                    // Let's check the cache again in case the last thread populated it
+                    claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
+                    if (claims != null)
+                    {
+                        return AuthenticateResult.Success(CreateTicket(claims));
+                    }
+
                     var response = await GetClaims(token).ConfigureAwait(false);
                     if (response.AuthenticateResult.Succeeded)
                     {
