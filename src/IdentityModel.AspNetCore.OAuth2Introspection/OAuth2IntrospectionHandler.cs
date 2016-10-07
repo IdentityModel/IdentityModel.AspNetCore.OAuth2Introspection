@@ -66,6 +66,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (response.IsError)
             {
+                _logger.LogError("Error returned from introspection endpoint: " + response.Error);
                 return AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error);
             }
 
