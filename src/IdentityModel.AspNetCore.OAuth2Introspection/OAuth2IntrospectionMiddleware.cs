@@ -19,7 +19,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     public class OAuth2IntrospectionMiddleware : AuthenticationMiddleware<OAuth2IntrospectionOptions>
     {
-        LazyAsync<IntrospectionClient> _client;
+        AsyncLazy<IntrospectionClient> _client;
         private readonly IDistributedCache _cache;
         private readonly ILoggerFactory _loggerFactory;
 
@@ -49,7 +49,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             _cache = cache;
-            _client = new LazyAsync<IntrospectionClient>(InitializeIntrospectionClient);
+            _client = new AsyncLazy<IntrospectionClient>(InitializeIntrospectionClient);
         }
 
         private async Task<IntrospectionClient> InitializeIntrospectionClient()
