@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System;
+using System.Collections.Concurrent;
 using IdentityModel.Client;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
@@ -20,7 +22,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly IDistributedCache _cache;
         private readonly LazyAsync<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
-        private static readonly KeyedSemaphore _keyedSemaphore = new KeyedSemaphore();
+        private readonly ConcurrentDictionary<string, LazyAsync<IntrospectionResponse>> _lazyTokenIntrospections = new ConcurrentDictionary<string, LazyAsync<IntrospectionResponse>>();
 
         public OAuth2IntrospectionHandler(LazyAsync<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache)
         {
@@ -54,73 +56,71 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 }
 
                 _logger.LogTrace("Token is not cached.");
+            }
+            
+            // Use a LazyAsync to ensure only one thread is requesting introspection for a token - the rest will wait for the result
+            var lazyIntrospection = _lazyTokenIntrospections.GetOrAdd(token, CreateLazyIntrospection);
 
-                // We actually need to go and fetch the claims from the server because we don't have them cached.
-                // It would be wasteful if we sent a request and another thread is already doing it.
-                // If that's the case we'll wait here.
-                var release = await _keyedSemaphore.WaitForKey(token).ConfigureAwait(false);
+            try
+            {
+                var response = await lazyIntrospection.GetValueAsync().ConfigureAwait(false);
 
-                try
+                if (response.IsError)
                 {
-                    // Let's check the cache again in case the last thread populated it
-                    claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
-                    if (claims != null)
+                    _logger.LogError("Error returned from introspection endpoint: " + response.Error);
+                    return AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error);
+                }
+
+                if (response.IsActive)
+                {
+                    var ticket = CreateTicket(response.Claims);
+
+                    if (Options.SaveToken)
                     {
-                        return AuthenticateResult.Success(CreateTicket(claims));
+                        ticket.Properties.StoreTokens(new[]
+                        {
+                            new AuthenticationToken {Name = "access_token", Value = token}
+                        });
                     }
 
-                    var response = await GetClaims(token).ConfigureAwait(false);
-                    if (response.AuthenticateResult.Succeeded)
+                    if (Options.EnableCaching)
                     {
                         await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                     }
-                    return response.AuthenticateResult;
+
+                    return AuthenticateResult.Success(ticket);
                 }
-                finally
+                else
                 {
-                    release.Release();
+                    return AuthenticateResult.Fail("Token is not active.");
                 }
             }
-
-            // Caching is turned off, lets fetch the claims fresh every time
-            var claimsResponse = await GetClaims(token).ConfigureAwait(false);
-            return claimsResponse.AuthenticateResult;
+            finally
+            {
+                // If caching is on and it succeeded, the claims are now in the cache.
+                // If caching is off and it succeeded, the claims will be discarded.
+                // Either way, we want to remove the temporary store of claims for this token because it is only intended for de-duping fetch requests
+                LazyAsync<IntrospectionResponse> removed;
+                _lazyTokenIntrospections.TryRemove(token, out removed);
+            }
         }
 
-        private async Task<ClaimsResponse> GetClaims(string token)
+        private LazyAsync<IntrospectionResponse> CreateLazyIntrospection(string token)
+        {
+            return new LazyAsync<IntrospectionResponse>(() => LoadClaimsForToken(token));
+        }
+
+        private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
         {
             var introspectionClient = await _client.GetValueAsync().ConfigureAwait(false);
 
-            var response = await introspectionClient.SendAsync(new IntrospectionRequest
+            return await introspectionClient.SendAsync(new IntrospectionRequest
             {
                 Token = token,
+                TokenTypeHint = OidcConstants.TokenTypes.AccessToken,
                 ClientId = Options.ScopeName,
                 ClientSecret = Options.ScopeSecret
             }).ConfigureAwait(false);
-
-            if (response.IsError)
-            {
-                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error) };
-            }
-
-            if (response.IsActive)
-            {
-                var ticket = CreateTicket(response.Claims);
-
-                if (Options.SaveToken)
-                {
-                    ticket.Properties.StoreTokens(new[]
-                    {
-                        new AuthenticationToken { Name = "access_token", Value = token }
-                    });
-                }
-
-                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Success(ticket), Claims = response.Claims };
-            }
-            else
-            {
-                return new ClaimsResponse { AuthenticateResult = AuthenticateResult.Fail("Token is not active.") };
-            }
         }
 
         private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
@@ -129,11 +129,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             var principal = new ClaimsPrincipal(id);
 
             return new AuthenticationTicket(principal, new AuthenticationProperties(), Options.AuthenticationScheme);
-        }
-        private class ClaimsResponse
-        {
-            public AuthenticateResult AuthenticateResult;
-            public IEnumerable<Claim> Claims;
         }
     }
 }
