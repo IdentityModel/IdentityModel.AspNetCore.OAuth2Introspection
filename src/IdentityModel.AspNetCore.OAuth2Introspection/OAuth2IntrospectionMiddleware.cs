@@ -33,9 +33,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
             }
 
-            if (options.Value.ScopeName.IsMissing() && options.Value.IntrospectionHttpHandler == null)
+            if (options.Value.ApiName.IsMissing() && options.Value.IntrospectionHttpHandler == null)
             {
-                throw new InvalidOperationException("You must either set a ScopeName or set an introspection HTTP handler");
+                throw new InvalidOperationException("You must either set a ApiName or set an introspection HTTP handler");
             }
 
             if (options.Value.TokenRetriever == null)

@@ -35,12 +35,12 @@ namespace Microsoft.AspNetCore.Builder
         /// <summary>
         /// Specifies the name of the introspection client.
         /// </summary>
-        public string ScopeName { get; set; }
+        public string ApiName { get; set; }
 
         /// <summary>
         /// Specifies the secret of the introspection client.
         /// </summary>
-        public string ScopeSecret { get; set; }
+        public string ApiSecret { get; set; }
 
         /// <summary>
         /// Specifies the claim type to use for the name claim (defaults to 'name')
