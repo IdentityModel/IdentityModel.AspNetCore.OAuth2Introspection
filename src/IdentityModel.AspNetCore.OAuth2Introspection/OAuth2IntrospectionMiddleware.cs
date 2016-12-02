@@ -35,7 +35,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (options.Value.ClientId.IsMissing() && options.Value.IntrospectionHttpHandler == null)
             {
-                throw new InvalidOperationException("You must either set a ScopeName or set an introspection HTTP handler");
+                throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
             }
 
             if (options.Value.TokenRetriever == null)

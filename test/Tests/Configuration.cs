@@ -33,7 +33,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
             Action act = () => PipelineFactory.CreateClient(_options);
 
             act.ShouldThrow<InvalidOperationException>()
-                .WithMessage("You must either set a ScopeName or set an introspection HTTP handler");
+                .WithMessage("You must either set a ClientId or set an introspection HTTP handler");
         }
 
         [Fact]
@@ -86,7 +86,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         }
 
         [Fact]
-        public void No_ScopeName_But_Introspection_Handler()
+        public void No_ClientName_But_Introspection_Handler()
         {
             _options.IntrospectionEndpoint = "http://endpoint";
             _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);

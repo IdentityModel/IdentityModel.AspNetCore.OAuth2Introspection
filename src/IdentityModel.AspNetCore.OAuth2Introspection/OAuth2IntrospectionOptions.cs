@@ -16,6 +16,7 @@ namespace Microsoft.AspNetCore.Builder
         public OAuth2IntrospectionOptions()
         {
             AuthenticationScheme = "Bearer";
+            AutomaticAuthenticate = true;
         }
 
         /// <summary>
