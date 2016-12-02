@@ -21,8 +21,8 @@ namespace AccessTokenValidation.Tests.Integration_Tests
             Authority = "http://authority.com",
             DiscoveryHttpHandler = new DiscoveryEndpointHandler(),
 
-            ScopeName = "scope",
-            ScopeSecret = "secret"
+            ClientId = "scope",
+            ClientSecret = "secret"
         };
 
         [Fact]

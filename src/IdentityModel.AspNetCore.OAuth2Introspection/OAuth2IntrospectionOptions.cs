@@ -16,8 +16,6 @@ namespace Microsoft.AspNetCore.Builder
         public OAuth2IntrospectionOptions()
         {
             AuthenticationScheme = "Bearer";
-            AutomaticAuthenticate = true;
-            AutomaticChallenge = true;
         }
 
         /// <summary>
@@ -33,14 +31,14 @@ namespace Microsoft.AspNetCore.Builder
         public string IntrospectionEndpoint { get; set; }
 
         /// <summary>
-        /// Specifies the name of the introspection client.
+        /// Specifies the id of the introspection client.
         /// </summary>
-        public string ScopeName { get; set; }
+        public string ClientId { get; set; }
 
         /// <summary>
         /// Specifies the secret of the introspection client.
         /// </summary>
-        public string ScopeSecret { get; set; }
+        public string ClientSecret { get; set; }
 
         /// <summary>
         /// Specifies the claim type to use for the name claim (defaults to 'name')

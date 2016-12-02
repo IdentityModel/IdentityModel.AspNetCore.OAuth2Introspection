@@ -118,8 +118,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             {
                 Token = token,
                 TokenTypeHint = OidcConstants.TokenTypes.AccessToken,
-                ClientId = Options.ScopeName,
-                ClientSecret = Options.ScopeSecret
+                ClientId = Options.ClientId,
+                ClientSecret = Options.ClientSecret
             }).ConfigureAwait(false);
         }
 
