@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1-rc1-*",
+  "version": "2.0.1-*",
   "description": "ASP.NET Core Middleware for validating tokens using OAuth 2.0 introspection",
   "authors": [ "Dominick Baier", "Brock Allen" ],
 
@@ -18,7 +18,7 @@
     "Microsoft.AspNetCore.Authentication": "1.0.0",
     "Microsoft.AspNetCore.Http.Abstractions": "1.0.0",
     "Microsoft.Extensions.Caching.Memory": "1.0.0",
-    "IdentityModel": "2.0.0-rc3"
+    "IdentityModel": "2.5.1"
   },
 
   "frameworks": {

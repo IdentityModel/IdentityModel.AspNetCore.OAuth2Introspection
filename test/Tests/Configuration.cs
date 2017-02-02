@@ -33,14 +33,14 @@ namespace AccessTokenValidation.Tests.Integration_Tests
             Action act = () => PipelineFactory.CreateClient(_options);
 
             act.ShouldThrow<InvalidOperationException>()
-                .WithMessage("You must either set a ScopeName or set an introspection HTTP handler");
+                .WithMessage("You must either set a ClientId or set an introspection HTTP handler");
         }
 
         [Fact]
         public void No_Token_Retriever()
         {
             _options.Authority = "http://foo";
-            _options.ScopeName = "scope";
+            _options.ClientId = "scope";
             _options.TokenRetriever = null;
 
             Action act = () => PipelineFactory.CreateClient(_options);
@@ -53,7 +53,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         public void Endpoint_But_No_Authority()
         {
             _options.IntrospectionEndpoint = "http://endpoint";
-            _options.ScopeName = "scope";
+            _options.ClientId = "scope";
 
             Action act = () => PipelineFactory.CreateClient(_options);
 
@@ -64,7 +64,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         public void Caching_With_Caching_Service()
         {
             _options.IntrospectionEndpoint = "http://endpoint";
-            _options.ScopeName = "scope";
+            _options.ClientId = "scope";
             _options.EnableCaching = true;
 
             Action act = () => PipelineFactory.CreateClient(_options, addCaching: true);
@@ -76,7 +76,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         public void Caching_Without_Caching_Service()
         {
             _options.IntrospectionEndpoint = "http://endpoint";
-            _options.ScopeName = "scope";
+            _options.ClientId = "scope";
             _options.EnableCaching = true;
 
             Action act = () => PipelineFactory.CreateClient(_options);
@@ -86,7 +86,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         }
 
         [Fact]
-        public void No_ScopeName_But_Introspection_Handler()
+        public void No_ClientName_But_Introspection_Handler()
         {
             _options.IntrospectionEndpoint = "http://endpoint";
             _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
@@ -100,7 +100,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         public void Authority_No_Network_Delay_Load()
         {
             _options.Authority = "http://localhost:6666";
-            _options.ScopeName = "scope";
+            _options.ClientId = "scope";
 
             Action act = () => PipelineFactory.CreateClient(_options);
 
@@ -111,7 +111,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         public async Task Authority_No_Trailing_Slash()
         {
             _options.Authority = "http://authority.com";
-            _options.ScopeName = "scope";
+            _options.ClientId = "scope";
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;
@@ -127,7 +127,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         public async Task Authority_Trailing_Slash()
         {
             _options.Authority = "http://authority.com/";
-            _options.ScopeName = "scope";
+            _options.ClientId = "scope";
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;
@@ -143,7 +143,7 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         public async Task Authority_Get_Introspection_Endpoint()
         {
             _options.Authority = "http://authority.com/";
-            _options.ScopeName = "scope";
+            _options.ClientId = "scope";
 
             var handler = new DiscoveryEndpointHandler();
             _options.DiscoveryHttpHandler = handler;

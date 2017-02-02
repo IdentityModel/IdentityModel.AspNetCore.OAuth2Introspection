@@ -13,7 +13,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         {
             return (request) =>
             {
-                string authorization = request.Headers["Authorization"];
+                string authorization = request.Headers["Authorization"].FirstOrDefault();
 
                 if (string.IsNullOrEmpty(authorization))
                 {

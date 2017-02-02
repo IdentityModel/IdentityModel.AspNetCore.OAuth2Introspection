@@ -19,7 +19,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     public class OAuth2IntrospectionMiddleware : AuthenticationMiddleware<OAuth2IntrospectionOptions>
     {
-        LazyAsync<IntrospectionClient> _client;
+        AsyncLazy<IntrospectionClient> _client;
         private readonly IDistributedCache _cache;
         private readonly ILoggerFactory _loggerFactory;
 
@@ -33,9 +33,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
             }
 
-            if (options.Value.ScopeName.IsMissing() && options.Value.IntrospectionHttpHandler == null)
+            if (options.Value.ClientId.IsMissing() && options.Value.IntrospectionHttpHandler == null)
             {
-                throw new InvalidOperationException("You must either set a ScopeName or set an introspection HTTP handler");
+                throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
             }
 
             if (options.Value.TokenRetriever == null)
@@ -49,7 +49,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             _cache = cache;
-            _client = new LazyAsync<IntrospectionClient>(InitializeIntrospectionClient);
+            _client = new AsyncLazy<IntrospectionClient>(InitializeIntrospectionClient);
         }
 
         private async Task<IntrospectionClient> InitializeIntrospectionClient()
