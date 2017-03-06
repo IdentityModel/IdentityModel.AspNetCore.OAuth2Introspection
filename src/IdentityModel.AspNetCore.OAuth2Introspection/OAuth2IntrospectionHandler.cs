@@ -52,8 +52,19 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 var claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
                 if (claims != null)
                 {
+                    var ticket = CreateTicket(claims);
+
                     _logger.LogTrace("Token found in cache.");
-                    return AuthenticateResult.Success(CreateTicket(claims));
+
+                    if (Options.SaveToken)
+                    {
+                        ticket.Properties.StoreTokens(new[]
+                        {
+                            new AuthenticationToken {Name = "access_token", Value = token}
+                        });
+                    }
+
+                    return AuthenticateResult.Success(ticket);
                 }
 
                 _logger.LogTrace("Token is not cached.");

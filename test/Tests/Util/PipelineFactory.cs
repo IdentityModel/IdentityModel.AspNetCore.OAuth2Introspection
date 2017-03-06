@@ -8,6 +8,11 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Hosting;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Authentication;
+using System.Net;
+using System.Text;
+using Microsoft.AspNetCore.Http;
 
 namespace Tests.Util
 {
@@ -20,20 +25,26 @@ namespace Tests.Util
                 {
                     app.UseOAuth2IntrospectionAuthentication(options);
 
-                    app.Use((context, next) =>
+                    app.Use(async (context, next) =>
                     {
                         var user = context.User;
 
                         if (user.Identity.IsAuthenticated)
                         {
+                            var responseObject = new Dictionary<string, string>
+                            {
+                                {"token", await context.Authentication.GetTokenAsync("access_token") }
+                            };
+
+                            var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
+
                             context.Response.StatusCode = 200;
+                            await context.Response.WriteAsync(json, Encoding.UTF8);
                         }
                         else
                         {
                             context.Response.StatusCode = 401;
                         }
-
-                        return Task.FromResult(0);
                     });
                 }) 
                 .ConfigureServices(services =>
