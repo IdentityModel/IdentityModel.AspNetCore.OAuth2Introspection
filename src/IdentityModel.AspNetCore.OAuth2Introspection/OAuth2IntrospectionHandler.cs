@@ -22,13 +22,14 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly IDistributedCache _cache;
         private readonly AsyncLazy<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
-        private readonly ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> _lazyTokenIntrospections = new ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>>();
+        private readonly ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> _lazyTokenIntrospections;
 
-        public OAuth2IntrospectionHandler(AsyncLazy<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache)
+        public OAuth2IntrospectionHandler(AsyncLazy<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache, ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> lazyTokenIntrospections)
         {
             _client = client;
             _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
             _cache = cache;
+            _lazyTokenIntrospections = lazyTokenIntrospections;
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()

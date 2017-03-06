@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         AsyncLazy<IntrospectionClient> _client;
         private readonly IDistributedCache _cache;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> _lazyTokenIntrospections;
 
         public OAuth2IntrospectionMiddleware(RequestDelegate next, IOptions<OAuth2IntrospectionOptions> options, UrlEncoder urlEncoder, ILoggerFactory loggerFactory, IDistributedCache cache = null)
             : base(next, options, loggerFactory, urlEncoder)
@@ -50,6 +52,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             _cache = cache;
             _client = new AsyncLazy<IntrospectionClient>(InitializeIntrospectionClient);
+            _lazyTokenIntrospections = new ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>>();
         }
 
         private async Task<IntrospectionClient> InitializeIntrospectionClient()
@@ -122,7 +125,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         protected override AuthenticationHandler<OAuth2IntrospectionOptions> CreateHandler()
         {
-            return new OAuth2IntrospectionHandler(_client, _loggerFactory, _cache);
+            return new OAuth2IntrospectionHandler(_client, _loggerFactory, _cache, _lazyTokenIntrospections);
         }
     }
 }
