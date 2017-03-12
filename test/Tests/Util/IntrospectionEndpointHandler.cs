@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using IdentityModel;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -31,7 +32,7 @@ namespace Tests.Util
 
             if (ttl.HasValue)
             {
-                AdditionalValues.Add("exp", DateTimeOffset.UtcNow.Add(ttl.Value).ToUnixTimeSeconds());
+                AdditionalValues.Add("exp", DateTimeOffset.UtcNow.Add(ttl.Value).ToEpochTime());
             }
         }
 
