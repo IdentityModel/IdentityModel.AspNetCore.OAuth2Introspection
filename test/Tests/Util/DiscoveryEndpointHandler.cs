@@ -15,13 +15,14 @@ namespace Tests.Util
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
         {
-            if (request.RequestUri.AbsoluteUri.ToString() == "http://authority.com/.well-known/openid-configuration")
+            if (request.RequestUri.AbsoluteUri.ToString() == "https://authority.com/.well-known/openid-configuration")
             {
                 Endpoint = request.RequestUri.AbsoluteUri;
 
                 var data = new Dictionary<string, object>
                 {
-                    { "introspection_endpoint", "http://introspection_endpoint" }
+                    { "issuer", "https://authority.com" },
+                    { "introspection_endpoint", "https://authority.com/introspection_endpoint" }
                 };
 
                 var json = SimpleJson.SimpleJson.SerializeObject(data);

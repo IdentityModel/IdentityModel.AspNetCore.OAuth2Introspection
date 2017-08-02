@@ -5,20 +5,18 @@ using System;
 using System.Net.Http;
 using Microsoft.AspNetCore.Http;
 using IdentityModel.AspNetCore.OAuth2Introspection;
+using Microsoft.AspNetCore.Authentication;
+using IdentityModel.Client;
+using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
+using System.Collections.Concurrent;
 
 namespace Microsoft.AspNetCore.Builder
 {
     /// <summary>
-    /// Options class for the OAuth 2.0 introspection endpoint authentication middleware
+    /// Options class for the OAuth 2.0 introspection endpoint authentication handler
     /// </summary>
-    public class OAuth2IntrospectionOptions : AuthenticationOptions
+    public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     {
-        public OAuth2IntrospectionOptions()
-        {
-            AuthenticationScheme = "Bearer";
-            AutomaticAuthenticate = true;
-        }
-
         /// <summary>
         /// Sets the base-path of the token provider.
         /// If set, the OpenID Connect discovery document will be used to find the introspection endpoint.
@@ -37,7 +35,7 @@ namespace Microsoft.AspNetCore.Builder
         public string ClientId { get; set; }
 
         /// <summary>
-        /// Specifies the secret of the introspection client.
+        /// Specifies the shared secret of the introspection client.
         /// </summary>
         public string ClientSecret { get; set; }
 
@@ -50,6 +48,11 @@ namespace Microsoft.AspNetCore.Builder
         /// Specifies the claim type to use for the role claim (defaults to 'role')
         /// </summary>
         public string RoleClaimType { get; set; } = "role";
+
+        /// <summary>
+        /// Specifies the policy for the discovery client
+        /// </summary>
+        public DiscoveryPolicy DiscoveryPolicy { get; set; } = new DiscoveryPolicy();
 
         /// <summary>
         /// Specifies the timout for contacting the discovery endpoint
@@ -95,5 +98,8 @@ namespace Microsoft.AspNetCore.Builder
         /// Specifies the method how to retrieve the token from the HTTP request
         /// </summary>
         public Func<HttpRequest, string> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();
+
+        internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
+        internal ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> LazyIntrospections { get; set; }
     }
 }
