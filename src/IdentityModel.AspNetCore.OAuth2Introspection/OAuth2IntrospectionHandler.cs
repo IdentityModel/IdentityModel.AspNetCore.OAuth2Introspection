@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -23,20 +24,18 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly AsyncLazy<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
         private readonly ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> _lazyTokenIntrospections;
-        private readonly IIntrospectionRequestGenerator _requestGenerator;
+        private IIntrospectionRequestGenerator _requestGenerator;
 
         public OAuth2IntrospectionHandler(
-            AsyncLazy<IntrospectionClient> client, 
-            ILoggerFactory loggerFactory, 
-            IDistributedCache cache, 
-            ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> lazyTokenIntrospections,
-            IIntrospectionRequestGenerator requestGenerator)
+            AsyncLazy<IntrospectionClient> client,
+            ILoggerFactory loggerFactory,
+            IDistributedCache cache,
+            ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> lazyTokenIntrospections)
         {
             _client = client;
             _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
             _cache = cache;
             _lazyTokenIntrospections = lazyTokenIntrospections;
-            _requestGenerator = requestGenerator;
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -53,6 +52,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 _logger.LogTrace("Token contains a dot - skipped because SkipTokensWithDots is set.");
                 return AuthenticateResult.Skip();
             }
+
+            // Resolve request generator
+            _requestGenerator = Context.RequestServices.GetService<IIntrospectionRequestGenerator>() ?? new DefaultIntrospectionRequestGenerator();
 
             if (Options.EnableCaching)
             {

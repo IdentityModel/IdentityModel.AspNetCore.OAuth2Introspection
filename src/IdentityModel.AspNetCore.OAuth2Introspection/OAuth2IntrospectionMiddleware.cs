@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
-using IdentityModel.AspNetCore.OAuth2Introspection.RequestHandling;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -25,15 +24,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly IDistributedCache _cache;
         private readonly ILoggerFactory _loggerFactory;
         private readonly ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> _lazyTokenIntrospections;
-        private readonly IIntrospectionRequestGenerator _requestGenerator;
 
         public OAuth2IntrospectionMiddleware(
-            RequestDelegate next, 
-            IOptions<OAuth2IntrospectionOptions> options, 
-            UrlEncoder urlEncoder, 
+            RequestDelegate next,
+            IOptions<OAuth2IntrospectionOptions> options,
+            UrlEncoder urlEncoder,
             ILoggerFactory loggerFactory,
-            IDistributedCache cache = null,
-            IIntrospectionRequestGenerator requestGenerator = null)
+            IDistributedCache cache = null)
             : base(next, options, loggerFactory, urlEncoder)
         {
             _loggerFactory = loggerFactory;
@@ -61,7 +58,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             _cache = cache;
             _client = new AsyncLazy<IntrospectionClient>(InitializeIntrospectionClient);
             _lazyTokenIntrospections = new ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>>();
-            _requestGenerator = requestGenerator ?? new DefaultIntrospectionRequestGenerator();
         }
 
         private async Task<IntrospectionClient> InitializeIntrospectionClient()
@@ -134,7 +130,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         protected override AuthenticationHandler<OAuth2IntrospectionOptions> CreateHandler()
         {
-            return new OAuth2IntrospectionHandler(_client, _loggerFactory, _cache, _lazyTokenIntrospections, _requestGenerator);
+            return new OAuth2IntrospectionHandler(_client, _loggerFactory, _cache, _lazyTokenIntrospections);
         }
     }
 }
