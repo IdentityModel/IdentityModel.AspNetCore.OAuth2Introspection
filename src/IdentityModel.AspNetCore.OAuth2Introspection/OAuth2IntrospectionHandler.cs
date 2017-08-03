@@ -1,15 +1,16 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System;
-using System.Collections.Concurrent;
-using IdentityModel.Client;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
+using IdentityModel.AspNetCore.OAuth2Introspection.RequestHandling;
+using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -23,8 +24,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly AsyncLazy<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
         private readonly ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> _lazyTokenIntrospections;
+        private IIntrospectionRequestGenerator _requestGenerator;
 
-        public OAuth2IntrospectionHandler(AsyncLazy<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache, ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> lazyTokenIntrospections)
+        public OAuth2IntrospectionHandler(
+            AsyncLazy<IntrospectionClient> client,
+            ILoggerFactory loggerFactory,
+            IDistributedCache cache,
+            ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> lazyTokenIntrospections)
         {
             _client = client;
             _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
@@ -47,10 +53,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 return AuthenticateResult.Skip();
             }
 
+            // Resolve request generator
+            _requestGenerator = Context.RequestServices.GetService<IIntrospectionRequestGenerator>() ?? new DefaultIntrospectionRequestGenerator();
+
             if (Options.EnableCaching)
             {
                 var claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
-                if (claims != null)
+                if (claims != null && await _requestGenerator.UseCacheAsync(Context.Request, claims))
                 {
                     var ticket = CreateTicket(claims);
 
@@ -67,7 +76,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                     return AuthenticateResult.Success(ticket);
                 }
 
-                _logger.LogTrace("Token is not cached.");
+                _logger.LogTrace("Token is not cached, or the introspection response generator rejected the currently cached claims.");
             }
             
             // Use a LazyAsync to ensure only one thread is requesting introspection for a token - the rest will wait for the result
@@ -124,15 +133,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
         {
+            var request = await _requestGenerator.GenerateRequestAsync(Context.Request, Options, token);
             var introspectionClient = await _client.Value.ConfigureAwait(false);
 
-            return await introspectionClient.SendAsync(new IntrospectionRequest
-            {
-                Token = token,
-                TokenTypeHint = OidcConstants.TokenTypes.AccessToken,
-                ClientId = Options.ClientId,
-                ClientSecret = Options.ClientSecret
-            }).ConfigureAwait(false);
+            return await introspectionClient.SendAsync(request).ConfigureAwait(false);
         }
 
         private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
