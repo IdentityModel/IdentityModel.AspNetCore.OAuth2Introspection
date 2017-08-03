@@ -57,18 +57,7 @@ namespace Tests.Util
                         services.AddDistributedMemoryCache();
                     }
 
-
-                    // services.AddSingleton<IOptions<OAuth2IntrospectionOptions>>(new OptionsWrapper<OAuth2IntrospectionOptions>(options));
-
-                    //services.AddAuthentication(o =>
-                    //{
-                    //    o.DefaultAuthenticateScheme = OAuth2IntrospectionDefaults.AuthenticationScheme;
-                    //    o.DefaultChallengeScheme = OAuth2IntrospectionDefaults.AuthenticationScheme;
-                    //    o.DefaultSignInScheme = OAuth2IntrospectionDefaults.AuthenticationScheme;
-                    //});
-
                     services.AddOAuth2IntrospectionAuthentication(options);
-
                 }));
         }
 
