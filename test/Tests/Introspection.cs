@@ -11,7 +11,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;
-using IdentityModel.Client;
 
 namespace Tests
 {

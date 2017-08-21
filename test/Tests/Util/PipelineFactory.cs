@@ -5,16 +5,12 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authentication;
-using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
-using IdentityModel.AspNetCore.OAuth2Introspection;
-using Microsoft.Extensions.Options;
 using System;
 
 namespace Tests.Util
@@ -24,6 +20,17 @@ namespace Tests.Util
         public static TestServer CreateServer(Action<OAuth2IntrospectionOptions> options, bool addCaching = false)
         {
             return new TestServer(new WebHostBuilder()
+                .ConfigureServices(services =>
+                {
+                    if (addCaching)
+                    {
+                        services.AddDistributedMemoryCache();
+                    }
+
+                    services
+                        .AddAuthentication(o => o.DefaultAuthenticateScheme = "Bearer")
+                        .AddOAuth2Introspection(options);
+                })
                 .Configure(app =>
                 {
                     app.UseAuthentication();
@@ -49,15 +56,6 @@ namespace Tests.Util
                             context.Response.StatusCode = 401;
                         }
                     });
-                })
-                .ConfigureServices(services =>
-                {
-                    if (addCaching)
-                    {
-                        services.AddDistributedMemoryCache();
-                    }
-
-                    services.AddOAuth2IntrospectionAuthentication(options);
                 }));
         }
 
