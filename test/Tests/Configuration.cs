@@ -89,7 +89,7 @@ namespace Tests
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldThrow<ArgumentException>()
-                .Where(e => e.Message.StartsWith("Caching is enabled, but no cache is found in the services collection"));
+                .Where(e => e.Message.StartsWith("Caching is enabled, but no IDistributedCache is found in the services collection"));
         }
 
         [Fact]

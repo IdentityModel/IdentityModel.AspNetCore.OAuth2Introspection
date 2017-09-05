@@ -55,6 +55,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 return;
             }
 
+            // if the lifetime of the token is shorter than the duration, use the remaining token lifetime
             DateTimeOffset absoluteLifetime;
             if (expiration <= now.Add(duration))
             {

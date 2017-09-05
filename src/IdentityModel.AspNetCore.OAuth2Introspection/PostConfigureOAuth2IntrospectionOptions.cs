@@ -40,7 +40,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (options.EnableCaching == true && _cache == null)
             {
-                throw new ArgumentException("Caching is enabled, but no cache is found in the services collection", nameof(_cache));
+                throw new ArgumentException("Caching is enabled, but no IDistributedCache is found in the services collection", nameof(_cache));
             }
 
             options.IntrospectionClient = new AsyncLazy<IntrospectionClient>(() => InitializeIntrospectionClient(options));
