@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using System;
+using IdentityModel.AspNetCore.OAuth2Introspection;
 
 namespace Tests.Util
 {
@@ -28,7 +29,7 @@ namespace Tests.Util
                     }
 
                     services
-                        .AddAuthentication(o => o.DefaultAuthenticateScheme = "Bearer")
+                        .AddAuthentication(OAuth2IntrospectionDefaults.AuthenticationScheme)
                         .AddOAuth2Introspection(options);
                 })
                 .Configure(app =>

@@ -18,11 +18,6 @@ namespace Microsoft.AspNetCore.Builder
     public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     {
         /// <summary>
-        /// Gets the default scheme name
-        /// </summary>
-        public static string DefaultSchemeName => "Bearer";
-
-        /// <summary>
         /// Sets the base-path of the token provider.
         /// If set, the OpenID Connect discovery document will be used to find the introspection endpoint.
         /// </summary>

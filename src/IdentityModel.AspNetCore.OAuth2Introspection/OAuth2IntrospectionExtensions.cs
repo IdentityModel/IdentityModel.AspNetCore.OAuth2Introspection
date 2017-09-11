@@ -13,18 +13,18 @@ namespace Microsoft.Extensions.DependencyInjection
     public static class OAuth2IntrospectionExtensions
     {
         public static AuthenticationBuilder AddOAuth2Introspection(this AuthenticationBuilder builder) 
-            => builder.AddOAuth2Introspection(OAuth2IntrospectionOptions.DefaultSchemeName);
+            => builder.AddOAuth2Introspection(OAuth2IntrospectionDefaults.AuthenticationScheme);
 
         public static AuthenticationBuilder AddOAuth2Introspection(this AuthenticationBuilder builder, string authenticationScheme) 
-            => builder.AddOAuth2Introspection(authenticationScheme, displayName: null, configureOptions: null);
+            => builder.AddOAuth2Introspection(authenticationScheme, configureOptions: null);
 
         public static AuthenticationBuilder AddOAuth2Introspection(this AuthenticationBuilder services, Action<OAuth2IntrospectionOptions> configureOptions) 
-            => services.AddOAuth2Introspection(OAuth2IntrospectionOptions.DefaultSchemeName, displayName: null, configureOptions: configureOptions);
+            => services.AddOAuth2Introspection(OAuth2IntrospectionDefaults.AuthenticationScheme, configureOptions: configureOptions);
 
-        public static AuthenticationBuilder AddOAuth2Introspection(this AuthenticationBuilder builder, string authenticationScheme, string displayName, Action<OAuth2IntrospectionOptions> configureOptions)
+        public static AuthenticationBuilder AddOAuth2Introspection(this AuthenticationBuilder builder, string authenticationScheme, Action<OAuth2IntrospectionOptions> configureOptions)
         {
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IPostConfigureOptions<OAuth2IntrospectionOptions>, PostConfigureOAuth2IntrospectionOptions>());
-            return builder.AddScheme<OAuth2IntrospectionOptions, OAuth2IntrospectionHandler>(authenticationScheme, displayName, configureOptions);
+            return builder.AddScheme<OAuth2IntrospectionOptions, OAuth2IntrospectionHandler>(authenticationScheme, configureOptions);
         }
     }
 }
