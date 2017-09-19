@@ -23,20 +23,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         public void PostConfigure(string name, OAuth2IntrospectionOptions options)
         {
-            if (options.Authority.IsMissing() && options.IntrospectionEndpoint.IsMissing())
-            {
-                throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
-            }
-
-            if (options.ClientId.IsMissing() && options.IntrospectionHttpHandler == null)
-            {
-                throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
-            }
-
-            if (options.TokenRetriever == null)
-            {
-                throw new ArgumentException("TokenRetriever must be set", nameof(options.TokenRetriever));
-            }
+            options.Validate();
 
             if (options.EnableCaching == true && _cache == null)
             {

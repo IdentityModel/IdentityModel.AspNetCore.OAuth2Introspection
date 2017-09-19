@@ -92,7 +92,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <summary>
         /// Specifies for how long the outcome of the token validation should be cached.
         /// </summary>
-        public TimeSpan CacheDuration { get; set; } = TimeSpan.FromMinutes(10);
+        public TimeSpan CacheDuration { get; set; } = TimeSpan.FromMinutes(5);
 
         /// <summary>
         /// Specifies the method how to retrieve the token from the HTTP request
@@ -101,5 +101,25 @@ namespace Microsoft.AspNetCore.Builder
 
         internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
         internal ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> LazyIntrospections { get; set; }
+
+        public override void Validate()
+        {
+            base.Validate();
+
+            if (Authority.IsMissing() && IntrospectionEndpoint.IsMissing())
+            {
+                throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
+            }
+
+            if (ClientId.IsMissing() && IntrospectionHttpHandler == null)
+            {
+                throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
+            }
+
+            if (TokenRetriever == null)
+            {
+                throw new ArgumentException("TokenRetriever must be set", nameof(TokenRetriever));
+            }
+        }
     }
 }
