@@ -1,4 +1,4 @@
-﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
+// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System;
@@ -14,6 +14,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
@@ -23,6 +25,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly AsyncLazy<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
         private readonly ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> _lazyTokenIntrospections;
+
+        private const string ERROR = "error";
+        private const string ERROR_DESCRIPTION = "error_description";
+        private const string EXPIRED_TOKEN = "expired_token";
+        private const string EXPIRED_TOKEN_DESCRIPTON = "The access token is expired";
+        private const string AUTH_STATUS_DESCRIPTION = "Bearer realm=\"example\", error=\"{0}\", error_description=\"{1}\"";
 
         public OAuth2IntrospectionHandler(AsyncLazy<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache, ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> lazyTokenIntrospections)
         {
@@ -69,14 +77,14 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 _logger.LogTrace("Token is not cached.");
             }
-            
+
             // Use a LazyAsync to ensure only one thread is requesting introspection for a token - the rest will wait for the result
             var lazyIntrospection = _lazyTokenIntrospections.GetOrAdd(token, CreateLazyIntrospection);
 
             try
             {
                 var response = await lazyIntrospection.Value.ConfigureAwait(false);
-
+                CheckAuthenticationStatus(response);
                 if (response.IsError)
                 {
                     _logger.LogError("Error returned from introspection endpoint: " + response.Error);
@@ -126,13 +134,15 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         {
             var introspectionClient = await _client.Value.ConfigureAwait(false);
 
-            return await introspectionClient.SendAsync(new IntrospectionRequest
+            var response = await introspectionClient.SendAsync(new IntrospectionRequest
             {
                 Token = token,
                 TokenTypeHint = OidcConstants.TokenTypes.AccessToken,
                 ClientId = Options.ClientId,
                 ClientSecret = Options.ClientSecret
             }).ConfigureAwait(false);
+
+            return response;
         }
 
         private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
@@ -142,5 +152,24 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             return new AuthenticationTicket(principal, new AuthenticationProperties(), Options.AuthenticationScheme);
         }
+
+        private void CheckAuthenticationStatus(IntrospectionResponse response)
+        {
+            if ((!string.IsNullOrWhiteSpace(response.Error) && response.Error.Equals(EXPIRED_TOKEN)) ||
+                (response.Claims != null && response.Claims.Any(x => x.Type.Equals(ERROR)) && response.Claims.First(x => x.Type.Equals(ERROR)).Value.Equals(EXPIRED_TOKEN)))
+            {
+                string error, errorDescription;
+                error = !string.IsNullOrWhiteSpace(response.Error) ? response.Error : response.Claims.First(x => x.Type.Equals(ERROR)).Value;
+                errorDescription = !string.IsNullOrWhiteSpace(response.HttpErrorReason) ? response.HttpErrorReason : (response.Claims != null && response.Claims.Any(x => x.Type.Equals(ERROR_DESCRIPTION)) ? response.Claims.First(x => x.Type.Equals(ERROR_DESCRIPTION)).Value : null);
+
+                if (string.IsNullOrEmpty(errorDescription) && error.Equals(EXPIRED_TOKEN))
+                {
+                    errorDescription = EXPIRED_TOKEN_DESCRIPTON;
+                }
+                Context.Response.Headers.Add(HeaderNames.WWWAuthenticate, string.Format(AUTH_STATUS_DESCRIPTION, error, errorDescription));
+            }
+        }
+
+
     }
 }
