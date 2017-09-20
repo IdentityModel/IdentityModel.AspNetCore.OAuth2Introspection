@@ -134,15 +134,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         {
             var introspectionClient = await _client.Value.ConfigureAwait(false);
 
-            var response = await introspectionClient.SendAsync(new IntrospectionRequest
+            return await introspectionClient.SendAsync(new IntrospectionRequest
             {
                 Token = token,
                 TokenTypeHint = OidcConstants.TokenTypes.AccessToken,
                 ClientId = Options.ClientId,
                 ClientSecret = Options.ClientSecret
             }).ConfigureAwait(false);
-
-            return response;
         }
 
         private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
@@ -169,7 +167,5 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 Context.Response.Headers.Add(HeaderNames.WWWAuthenticate, string.Format(AUTH_STATUS_DESCRIPTION, error, errorDescription));
             }
         }
-
-
     }
 }
