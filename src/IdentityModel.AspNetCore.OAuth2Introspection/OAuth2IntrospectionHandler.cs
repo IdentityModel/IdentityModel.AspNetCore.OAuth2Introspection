@@ -30,7 +30,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private const string ERROR_DESCRIPTION = "error_description";
         private const string EXPIRED_TOKEN = "expired_token";
         private const string EXPIRED_TOKEN_DESCRIPTON = "The access token is expired";
-        private const string AUTH_STATUS_DESCRIPTION = "Bearer realm=\"example\", error=\"{0}\", error_description=\"{1}\"";
+        private const string AUTH_STATUS_DESCRIPTION = "Bearer error=\"{0}\", error_description=\"{1}\"";
 
         public OAuth2IntrospectionHandler(AsyncLazy<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache, ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> lazyTokenIntrospections)
         {
@@ -134,13 +134,15 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         {
             var introspectionClient = await _client.Value.ConfigureAwait(false);
 
-            return await introspectionClient.SendAsync(new IntrospectionRequest
+            var response = await introspectionClient.SendAsync(new IntrospectionRequest
             {
                 Token = token,
                 TokenTypeHint = OidcConstants.TokenTypes.AccessToken,
                 ClientId = Options.ClientId,
                 ClientSecret = Options.ClientSecret
             }).ConfigureAwait(false);
+
+            return response;
         }
 
         private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
@@ -153,8 +155,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         private void CheckAuthenticationStatus(IntrospectionResponse response)
         {
-            if ((!string.IsNullOrWhiteSpace(response.Error) && response.Error.Equals(EXPIRED_TOKEN)) ||
-                (response.Claims != null && response.Claims.Any(x => x.Type.Equals(ERROR)) && response.Claims.First(x => x.Type.Equals(ERROR)).Value.Equals(EXPIRED_TOKEN)))
+            if (!string.IsNullOrWhiteSpace(response.Error) ||
+                (response.Claims != null && response.Claims.Any(x => x.Type.Equals(ERROR))))
             {
                 string error, errorDescription;
                 error = !string.IsNullOrWhiteSpace(response.Error) ? response.Error : response.Claims.First(x => x.Type.Equals(ERROR)).Value;
@@ -167,5 +169,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 Context.Response.Headers.Add(HeaderNames.WWWAuthenticate, string.Format(AUTH_STATUS_DESCRIPTION, error, errorDescription));
             }
         }
+
+
     }
 }
