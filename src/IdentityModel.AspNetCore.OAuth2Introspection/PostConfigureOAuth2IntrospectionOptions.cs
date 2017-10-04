@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
-    public class PostConfigureOAuth2IntrospectionOptions : IPostConfigureOptions<OAuth2IntrospectionOptions>
+    internal class PostConfigureOAuth2IntrospectionOptions : IPostConfigureOptions<OAuth2IntrospectionOptions>
     {
         private readonly IDistributedCache _cache;
 

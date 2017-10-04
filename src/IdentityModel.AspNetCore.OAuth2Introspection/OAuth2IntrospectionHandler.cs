@@ -16,11 +16,22 @@ using Microsoft.Extensions.Options;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
+    /// <summary>
+    /// Authentication handler for OAuth 2.0 introspection
+    /// </summary>
     public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2IntrospectionOptions>
     {
         private readonly IDistributedCache _cache;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OAuth2IntrospectionHandler"/> class.
+        /// </summary>
+        /// <param name="options">The options.</param>
+        /// <param name="urlEncoder">The URL encoder.</param>
+        /// <param name="clock">The clock.</param>
+        /// <param name="loggerFactory">The logger factory.</param>
+        /// <param name="cache">The cache.</param>
         public OAuth2IntrospectionHandler(
             IOptionsMonitor<OAuth2IntrospectionOptions> options,
             UrlEncoder urlEncoder,
@@ -33,6 +44,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             _cache = cache;
         }
 
+        /// <summary>
+        /// Tries to authenticate a reference token on the current request
+        /// </summary>
+        /// <returns></returns>
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             string token = Options.TokenRetriever(Context.Request);

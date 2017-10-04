@@ -3,8 +3,17 @@
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
+    /// <summary>
+    /// Defaults for OAuth 2.0 introspection authentication
+    /// </summary>
     public class OAuth2IntrospectionDefaults
     {
+        /// <summary>
+        /// Gets the default authentication scheme.
+        /// </summary>
+        /// <value>
+        /// The authentication scheme.
+        /// </value>
         public static string AuthenticationScheme => "Bearer";
     }
 }

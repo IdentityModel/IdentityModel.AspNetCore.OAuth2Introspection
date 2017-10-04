@@ -102,6 +102,15 @@ namespace Microsoft.AspNetCore.Builder
         internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
         internal ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> LazyIntrospections { get; set; }
 
+        /// <summary>
+        /// Check that the options are valid. Should throw an exception if things are not ok.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// You must either set Authority or IntrospectionEndpoint
+        /// or
+        /// You must either set a ClientId or set an introspection HTTP handler
+        /// </exception>
+        /// <exception cref="ArgumentException">TokenRetriever must be set - TokenRetriever</exception>
         public override void Validate()
         {
             base.Validate();

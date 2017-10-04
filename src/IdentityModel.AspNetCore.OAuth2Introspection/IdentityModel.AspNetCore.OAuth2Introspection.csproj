@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>ASP.NET Core 2.0 Middleware for validating tokens using OAuth 2.0 introspection</Description>
-    <VersionPrefix>3.0.0</VersionPrefix>
+    <VersionPrefix>3.0.1</VersionPrefix>
     <!--<VersionSuffix>rc2</VersionSuffix>-->
     <Authors>Dominick Baier;Brock Allen</Authors>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
@@ -13,6 +13,14 @@
     <PackageLicenseUrl>https://github.com/IdentityModel/IdentityModel.AspNetCore.OAuth2Introspection/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/identitymodel/identitymodel.aspnetcore.oauth2introspection</RepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard2.0\IdentityModel.AspNetCore.OAuth2Introspection.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
+    <DocumentationFile>bin\Debug\netstandard2.0\IdentityModel.AspNetCore.OAuth2Introspection.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
