@@ -1,6 +1,6 @@
 # IdentityModel.AspNetCore.OAuth2Introspection
 
-ASP.NET Core 2 authentication for OAuth 2.0 token introspection
+ASP.NET Core 2 authentication handler for OAuth 2.0 token introspection
 
 https://tools.ietf.org/html/rfc7662
 
