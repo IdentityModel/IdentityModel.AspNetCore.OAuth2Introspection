@@ -1,35 +1,36 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System;
-using System.Collections.Concurrent;
-using IdentityModel.Client;
-using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http.Authentication;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
+using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2IntrospectionOptions>
     {
         private readonly IDistributedCache _cache;
-        private readonly AsyncLazy<IntrospectionClient> _client;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
-        private readonly ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> _lazyTokenIntrospections;
 
-        public OAuth2IntrospectionHandler(AsyncLazy<IntrospectionClient> client, ILoggerFactory loggerFactory, IDistributedCache cache, ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> lazyTokenIntrospections)
+        public OAuth2IntrospectionHandler(
+            IOptionsMonitor<OAuth2IntrospectionOptions> options,
+            UrlEncoder urlEncoder,
+            ISystemClock clock,
+            ILoggerFactory loggerFactory,
+            IDistributedCache cache = null)
+            : base(options, loggerFactory, urlEncoder, clock)
         {
-            _client = client;
             _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
             _cache = cache;
-            _lazyTokenIntrospections = lazyTokenIntrospections;
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -38,13 +39,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (token.IsMissing())
             {
-                return AuthenticateResult.Skip();
+                return AuthenticateResult.NoResult();
             }
 
             if (token.Contains('.') && Options.SkipTokensWithDots)
             {
                 _logger.LogTrace("Token contains a dot - skipped because SkipTokensWithDots is set.");
-                return AuthenticateResult.Skip();
+                return AuthenticateResult.NoResult();
             }
 
             if (Options.EnableCaching)
@@ -60,7 +61,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                     {
                         ticket.Properties.StoreTokens(new[]
                         {
-                            new AuthenticationToken {Name = "access_token", Value = token}
+                            new AuthenticationToken { Name = "access_token", Value = token }
                         });
                     }
 
@@ -69,9 +70,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 _logger.LogTrace("Token is not cached.");
             }
-            
+
             // Use a LazyAsync to ensure only one thread is requesting introspection for a token - the rest will wait for the result
-            var lazyIntrospection = _lazyTokenIntrospections.GetOrAdd(token, CreateLazyIntrospection);
+            var lazyIntrospection = Options.LazyIntrospections.GetOrAdd(token, CreateLazyIntrospection);
 
             try
             {
@@ -112,8 +113,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 // If caching is on and it succeeded, the claims are now in the cache.
                 // If caching is off and it succeeded, the claims will be discarded.
                 // Either way, we want to remove the temporary store of claims for this token because it is only intended for de-duping fetch requests
-                AsyncLazy<IntrospectionResponse> removed;
-                _lazyTokenIntrospections.TryRemove(token, out removed);
+                Options.LazyIntrospections.TryRemove(token, out var removed);
             }
         }
 
@@ -124,7 +124,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
         {
-            var introspectionClient = await _client.Value.ConfigureAwait(false);
+            var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
 
             return await introspectionClient.SendAsync(new IntrospectionRequest
             {
@@ -137,10 +137,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
         {
-            var id = new ClaimsIdentity(claims, Options.AuthenticationScheme, Options.NameClaimType, Options.RoleClaimType);
+            var id = new ClaimsIdentity(claims, Scheme.Name, Options.NameClaimType, Options.RoleClaimType);
             var principal = new ClaimsPrincipal(id);
 
-            return new AuthenticationTicket(principal, new AuthenticationProperties(), Options.AuthenticationScheme);
+            return new AuthenticationTicket(principal, new AuthenticationProperties(), Scheme.Name);
         }
     }
 }

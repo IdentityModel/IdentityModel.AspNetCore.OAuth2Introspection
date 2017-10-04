@@ -10,16 +10,15 @@ using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;
 
-namespace AccessTokenValidation.Tests.Integration_Tests
+namespace Tests
 {
     public class Configuration
     {
-        OAuth2IntrospectionOptions _options = new OAuth2IntrospectionOptions();
-
         [Fact]
         public void Empty_Options()
         {
-            Action act = () => PipelineFactory.CreateClient(_options);
+            Action act = () => PipelineFactory.CreateClient((options) => { })
+            .GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldThrow<InvalidOperationException>()
                 .WithMessage("You must either set Authority or IntrospectionEndpoint");
@@ -28,9 +27,10 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public void Authority_No_Scope_Details()
         {
-            _options.Authority = "http://foo";
-
-            Action act = () => PipelineFactory.CreateClient(_options);
+            Action act = () => PipelineFactory.CreateClient((options) =>
+            {
+                options.Authority = "http://foo";
+            }).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldThrow<InvalidOperationException>()
                 .WithMessage("You must either set a ClientId or set an introspection HTTP handler");
@@ -39,11 +39,12 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public void No_Token_Retriever()
         {
-            _options.Authority = "http://foo";
-            _options.ClientId = "scope";
-            _options.TokenRetriever = null;
-
-            Action act = () => PipelineFactory.CreateClient(_options);
+            Action act = () => PipelineFactory.CreateClient(options =>
+            {
+                options.Authority = "http://foo";
+                options.ClientId = "scope";
+                options.TokenRetriever = null;
+            }).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldThrow<ArgumentException>()
                 .Where(e => e.Message.StartsWith("TokenRetriever must be set"));
@@ -52,10 +53,12 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public void Endpoint_But_No_Authority()
         {
-            _options.IntrospectionEndpoint = "http://endpoint";
-            _options.ClientId = "scope";
+            Action act = () => PipelineFactory.CreateClient(options =>
+            {
+                options.IntrospectionEndpoint = "http://endpoint";
+                options.ClientId = "scope";
 
-            Action act = () => PipelineFactory.CreateClient(_options);
+            }).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldNotThrow();
         }
@@ -63,11 +66,13 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public void Caching_With_Caching_Service()
         {
-            _options.IntrospectionEndpoint = "http://endpoint";
-            _options.ClientId = "scope";
-            _options.EnableCaching = true;
+            Action act = () => PipelineFactory.CreateClient(options =>
+            {
+                options.IntrospectionEndpoint = "http://endpoint";
+                options.ClientId = "scope";
+                options.EnableCaching = true;
 
-            Action act = () => PipelineFactory.CreateClient(_options, addCaching: true);
+            }, addCaching: true).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldNotThrow();
         }
@@ -75,23 +80,27 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public void Caching_Without_Caching_Service()
         {
-            _options.IntrospectionEndpoint = "http://endpoint";
-            _options.ClientId = "scope";
-            _options.EnableCaching = true;
+            Action act = () => PipelineFactory.CreateClient(options =>
+            {
+                options.IntrospectionEndpoint = "http://endpoint";
+                options.ClientId = "scope";
+                options.EnableCaching = true;
 
-            Action act = () => PipelineFactory.CreateClient(_options);
+            }).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldThrow<ArgumentException>()
-                .Where(e => e.Message.StartsWith("Caching is enabled, but no cache is found in the services collection"));
+                .Where(e => e.Message.StartsWith("Caching is enabled, but no IDistributedCache is found in the services collection"));
         }
 
         [Fact]
         public void No_ClientName_But_Introspection_Handler()
         {
-            _options.IntrospectionEndpoint = "http://endpoint";
-            _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+            Action act = () => PipelineFactory.CreateClient(options =>
+            {
+                options.IntrospectionEndpoint = "http://endpoint";
+                options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
-            Action act = () => PipelineFactory.CreateClient(_options);
+            }).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldNotThrow();
         }
@@ -99,60 +108,38 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public void Authority_No_Network_Delay_Load()
         {
-            _options.Authority = "http://localhost:6666";
-            _options.ClientId = "scope";
-
-            Action act = () => PipelineFactory.CreateClient(_options);
+            Action act = () => PipelineFactory.CreateClient(options =>
+            {
+                options.Authority = "http://localhost:6666";
+                options.ClientId = "scope";
+            }).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.ShouldNotThrow();
         }
 
         [Fact]
-        public async Task Authority_No_Trailing_Slash()
-        {
-            _options.Authority = "http://authority.com";
-            _options.ClientId = "scope";
-
-            var handler = new DiscoveryEndpointHandler();
-            _options.DiscoveryHttpHandler = handler;
-
-            var client = PipelineFactory.CreateClient(_options);
-            client.SetBearerToken("token");
-            var response = await client.GetAsync("http://server/api");
-
-            handler.Endpoint.Should().Be("http://authority.com/.well-known/openid-configuration");
-        }
-
-        [Fact]
-        public async Task Authority_Trailing_Slash()
-        {
-            _options.Authority = "http://authority.com/";
-            _options.ClientId = "scope";
-
-            var handler = new DiscoveryEndpointHandler();
-            _options.DiscoveryHttpHandler = handler;
-
-            var client  = PipelineFactory.CreateClient(_options);
-            client.SetBearerToken("token");
-            var response = await client.GetAsync("http://server/api");
-
-            handler.Endpoint.Should().Be("http://authority.com/.well-known/openid-configuration");
-        }
-
-        [Fact]
         public async Task Authority_Get_Introspection_Endpoint()
         {
-            _options.Authority = "http://authority.com/";
-            _options.ClientId = "scope";
-
             var handler = new DiscoveryEndpointHandler();
-            _options.DiscoveryHttpHandler = handler;
+            OAuth2IntrospectionOptions ops = null;
 
-            var client = PipelineFactory.CreateClient(_options);
+            var client = PipelineFactory.CreateClient(options =>
+            {
+                options.Authority = "https://authority.com/";
+                options.ClientId = "scope";
+
+                options.DiscoveryHttpHandler = handler;
+                options.DiscoveryPolicy.RequireKeySet = false;
+
+                options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+
+                ops = options;
+            });
+
             client.SetBearerToken("token");
             var response = await client.GetAsync("http://server/api");
 
-            _options.IntrospectionEndpoint.Should().Be("http://introspection_endpoint");
+            ops.IntrospectionEndpoint.Should().Be("https://authority.com/introspection_endpoint");
         }
     }
 }

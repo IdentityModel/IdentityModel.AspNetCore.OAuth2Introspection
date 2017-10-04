@@ -1,15 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp1.1;net452</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
     <AssemblyName>Tests</AssemblyName>
     <PackageId>Tests</PackageId>
-    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-    <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">$(PackageTargetFallback);dnxcore50;portable-net45+win8</PackageTargetFallback>
-    <RuntimeFrameworkVersion Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">1.1.1</RuntimeFrameworkVersion>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
   </PropertyGroup>
 
 
@@ -18,16 +12,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
-    <PackageReference Include="xunit" Version="2.2.0" />
-    <PackageReference Include="FluentAssertions" Version="4.19.2" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="1.1.2" />
-    <PackageReference Include="IdentityModel" Version="2.8.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0-preview-20170727-01" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-beta3-build3705" />
+    <PackageReference Include="xunit" Version="2.3.0-beta3-build3705" />
+    <PackageReference Include="FluentAssertions" Version="4.19.3" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.0.0" />
+    <PackageReference Include="IdentityModel" Version="2.10.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+    <Folder Include="Properties\" />
   </ItemGroup>
-
 </Project>

@@ -5,25 +5,36 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authentication;
-using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using System;
+using IdentityModel.AspNetCore.OAuth2Introspection;
 
 namespace Tests.Util
 {
     class PipelineFactory
     {
-        public static TestServer CreateServer(OAuth2IntrospectionOptions options, bool addCaching = false)
+        public static TestServer CreateServer(Action<OAuth2IntrospectionOptions> options, bool addCaching = false)
         {
             return new TestServer(new WebHostBuilder()
+                .ConfigureServices(services =>
+                {
+                    if (addCaching)
+                    {
+                        services.AddDistributedMemoryCache();
+                    }
+
+                    services
+                        .AddAuthentication(OAuth2IntrospectionDefaults.AuthenticationScheme)
+                        .AddOAuth2Introspection(options);
+                })
                 .Configure(app =>
                 {
-                    app.UseOAuth2IntrospectionAuthentication(options);
+                    app.UseAuthentication();
 
                     app.Use(async (context, next) =>
                     {
@@ -33,7 +44,7 @@ namespace Tests.Util
                         {
                             var responseObject = new Dictionary<string, string>
                             {
-                                {"token", await context.Authentication.GetTokenAsync("access_token") }
+                                {"token", await context.GetTokenAsync("access_token") }
                             };
 
                             var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
@@ -46,24 +57,15 @@ namespace Tests.Util
                             context.Response.StatusCode = 401;
                         }
                     });
-                }) 
-                .ConfigureServices(services =>
-                {
-                    if (addCaching)
-                    {
-                        services.AddDistributedMemoryCache();
-                    }
-
-                    services.AddAuthentication();
                 }));
         }
 
-        public static HttpClient CreateClient(OAuth2IntrospectionOptions options, bool addCaching = false)
+        public static HttpClient CreateClient(Action<OAuth2IntrospectionOptions> options, bool addCaching = false)
         {
             return CreateServer(options, addCaching).CreateClient();
         }
 
-        public static HttpMessageHandler CreateHandler(OAuth2IntrospectionOptions options, bool addCaching = false)
+        public static HttpMessageHandler CreateHandler(Action<OAuth2IntrospectionOptions> options, bool addCaching = false)
         {
             return CreateServer(options, addCaching).CreateHandler();
         }

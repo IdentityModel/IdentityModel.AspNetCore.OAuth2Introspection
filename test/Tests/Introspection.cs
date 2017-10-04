@@ -12,27 +12,30 @@ using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;
 
-namespace AccessTokenValidation.Tests.Integration_Tests
+namespace Tests
 {
     public class Introspection
     {
-        OAuth2IntrospectionOptions _options = new OAuth2IntrospectionOptions
+        Action<OAuth2IntrospectionOptions> _options = (o) =>
         {
-            AutomaticAuthenticate = true,
+            o.Authority = "https://authority.com";
+            o.DiscoveryHttpHandler = new DiscoveryEndpointHandler();
 
-            Authority = "http://authority.com",
-            DiscoveryHttpHandler = new DiscoveryEndpointHandler(),
+            o.DiscoveryPolicy.RequireKeySet = false;
 
-            ClientId = "scope",
-            ClientSecret = "secret"
+            o.ClientId = "scope";
+            o.ClientSecret = "secret";
         };
 
         [Fact]
         public async Task Unauthorized_Client()
         {
-            _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
+            });
 
-            var client = PipelineFactory.CreateClient(_options);
             client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
@@ -42,9 +45,12 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public async Task ActiveToken()
         {
-            _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+            });
 
-            var client = PipelineFactory.CreateClient(_options);
             client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
@@ -54,11 +60,16 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public async Task ActiveToken_With_Caching_Ttl_Longer_Than_Duration()
         {
-            _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
-            _options.EnableCaching = true;
-            _options.CacheDuration = TimeSpan.FromMinutes(10);
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
 
-            var client = PipelineFactory.CreateClient(_options, addCaching: true);
+                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+                o.EnableCaching = true;
+                o.CacheDuration = TimeSpan.FromMinutes(10);
+
+            }, true);
+
             client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
@@ -71,11 +82,15 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public async Task ActiveToken_With_Caching_Ttl_Shorter_Than_Duration()
         {
-            _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
-            _options.EnableCaching = true;
-            _options.CacheDuration = TimeSpan.FromMinutes(10);
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
 
-            var client = PipelineFactory.CreateClient(_options, addCaching: true);
+                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
+                o.EnableCaching = true;
+                o.CacheDuration = TimeSpan.FromMinutes(10);
+            }, true);
+
             client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
@@ -88,10 +103,12 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public async Task InactiveToken()
         {
-            _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
 
-            var client = PipelineFactory.CreateClient(_options);
-            client.SetBearerToken("sometoken");
+            }); client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -100,12 +117,15 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public async Task ActiveToken_With_SavedToken()
         {
-            _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-            _options.SaveToken = true;
-
             var expectedToken = "expected_token";
 
-            var client = PipelineFactory.CreateClient(_options);
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                o.SaveToken = true;
+            });
+
             client.SetBearerToken(expectedToken);
 
             var response = await client.GetAsync("http://test");
@@ -120,14 +140,17 @@ namespace AccessTokenValidation.Tests.Integration_Tests
         [Fact]
         public async Task ActiveToken_With_SavedToken_And_Caching()
         {
-            _options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
-            _options.SaveToken = true;
-            _options.EnableCaching = true;
-            _options.CacheDuration = TimeSpan.FromMinutes(10);
-
             var expectedToken = "expected_token";
 
-            var client = PipelineFactory.CreateClient(_options, true);
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+                o.SaveToken = true;
+                o.EnableCaching = true;
+                o.CacheDuration = TimeSpan.FromMinutes(10);
+            }, true);
+
             client.SetBearerToken(expectedToken);
 
             var firstResponse = await client.GetAsync("http://test");
