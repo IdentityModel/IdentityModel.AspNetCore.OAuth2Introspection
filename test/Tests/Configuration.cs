@@ -137,7 +137,7 @@ namespace Tests
             });
 
             client.SetBearerToken("token");
-            var response = await client.GetAsync("http://server/api");
+            await client.GetAsync("http://server/api");
 
             ops.IntrospectionEndpoint.Should().Be("https://authority.com/introspection_endpoint");
         }

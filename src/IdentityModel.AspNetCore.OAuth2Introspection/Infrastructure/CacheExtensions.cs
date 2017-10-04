@@ -15,12 +15,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     internal static class CacheExtensions
     {
-        internal static JsonSerializerSettings _settings;
+        internal readonly static JsonSerializerSettings Settings;
 
         static CacheExtensions()
         {
-            _settings = new JsonSerializerSettings();
-            _settings.Converters.Add(new ClaimConverter());
+            Settings = new JsonSerializerSettings();
+            Settings.Converters.Add(new ClaimConverter());
         }
 
         public static async Task<IEnumerable<Claim>> GetClaimsAsync(this IDistributedCache cache, string token)
@@ -33,7 +33,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             var json = Encoding.UTF8.GetString(bytes);
-            return JsonConvert.DeserializeObject<IEnumerable<Claim>>(json, _settings);
+            return JsonConvert.DeserializeObject<IEnumerable<Claim>>(json, Settings);
         }
 
         public static async Task SetClaimsAsync(this IDistributedCache cache, string token, IEnumerable<Claim> claims, TimeSpan duration, ILogger logger)
@@ -66,7 +66,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 absoluteLifetime = now.Add(duration);
             }
 
-            var json = JsonConvert.SerializeObject(claims, _settings);
+            var json = JsonConvert.SerializeObject(claims, Settings);
             var bytes = Encoding.UTF8.GetBytes(json);
 
             logger.LogDebug("Setting cache item expiration to {expiration}", absoluteLifetime);

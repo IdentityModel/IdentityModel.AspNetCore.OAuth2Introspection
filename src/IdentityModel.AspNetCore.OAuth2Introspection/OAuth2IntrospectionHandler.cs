@@ -113,7 +113,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 // If caching is on and it succeeded, the claims are now in the cache.
                 // If caching is off and it succeeded, the claims will be discarded.
                 // Either way, we want to remove the temporary store of claims for this token because it is only intended for de-duping fetch requests
-                Options.LazyIntrospections.TryRemove(token, out var removed);
+                Options.LazyIntrospections.TryRemove(token, out _);
             }
         }
 

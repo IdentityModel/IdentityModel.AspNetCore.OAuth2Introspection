@@ -25,7 +25,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         {
             options.Validate();
 
-            if (options.EnableCaching == true && _cache == null)
+            if (options.EnableCaching && _cache == null)
             {
                 throw new ArgumentException("Caching is enabled, but no IDistributedCache is found in the services collection", nameof(_cache));
             }
