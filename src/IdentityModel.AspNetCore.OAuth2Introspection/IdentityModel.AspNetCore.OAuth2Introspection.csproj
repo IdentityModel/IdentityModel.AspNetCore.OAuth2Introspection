@@ -6,7 +6,6 @@
     <!--<VersionSuffix>rc2</VersionSuffix>-->
     <Authors>Dominick Baier;Brock Allen</Authors>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <AssemblyName>IdentityModel.AspNetCore.OAuth2Introspection</AssemblyName>
     <PackageId>IdentityModel.AspNetCore.OAuth2Introspection</PackageId>
     <PackageTags>OAuth2;OAuth 2.0;Introspection;Security;Identity;IdentityServer</PackageTags>
     <PackageIconUrl>https://identityserver.github.io/Documentation/assets/images/icons/IDmodel_icon128.png</PackageIconUrl>
@@ -17,6 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.4.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.0" />
