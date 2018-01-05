@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>ASP.NET Core 2.0 Middleware for validating tokens using OAuth 2.0 introspection</Description>
     <VersionPrefix>3.1.0</VersionPrefix>
-    <VersionSuffix>preview1</VersionSuffix>
+    <!--<VersionSuffix>preview1</VersionSuffix>-->
     <Authors>Dominick Baier;Brock Allen</Authors>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <PackageId>IdentityModel.AspNetCore.OAuth2Introspection</PackageId>
@@ -24,10 +24,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.6.1" PrivateAssets="all" />
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.7.4" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.0" />
-    <PackageReference Include="IdentityModel" Version="3.0.0-aberfeldy" />    
+    <PackageReference Include="IdentityModel" Version="3.0.0" />    
   </ItemGroup>
 </Project>

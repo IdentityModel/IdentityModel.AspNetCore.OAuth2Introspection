@@ -46,7 +46,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             var now = DateTimeOffset.UtcNow;
-            var expiration = long.Parse(expClaim.Value).ToDateTimeOffsetFromEpoch();
+            var expiration = int.Parse(expClaim.Value).ToDateTimeOffsetFromEpoch();
             logger.LogDebug("Token will expire in {expiration}", expiration);
             
 
