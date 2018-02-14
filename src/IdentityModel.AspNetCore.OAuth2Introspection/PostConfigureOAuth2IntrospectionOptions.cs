@@ -32,6 +32,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             options.IntrospectionClient = new AsyncLazy<IntrospectionClient>(() => InitializeIntrospectionClient(options));
             options.LazyIntrospections = new ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>>();
+
+            options.UserinfoClient = new AsyncLazy<UserInfoClient>(() => InitializeUserinfoClient(options));
+            options.LazyUserinfos = new ConcurrentDictionary<string, AsyncLazy<UserInfoResponse>>();
+
         }
 
         private async Task<string> GetIntrospectionEndpointFromDiscoveryDocument(OAuth2IntrospectionOptions Options)
@@ -99,5 +103,72 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             client.Timeout = Options.DiscoveryTimeout;
             return client;
         }
+
+        private async Task<string> GetUserinfoEndpointFromDiscoveryDocument(OAuth2IntrospectionOptions Options)
+        {
+            DiscoveryClient client;
+
+            if (Options.DiscoveryHttpHandler != null)
+            {
+                client = new DiscoveryClient(Options.Authority, Options.DiscoveryHttpHandler);
+            }
+            else
+            {
+                client = new DiscoveryClient(Options.Authority);
+            }
+
+            client.Timeout = Options.DiscoveryTimeout;
+            client.Policy = Options?.DiscoveryPolicy ?? new DiscoveryPolicy();
+
+            var disco = await client.GetAsync().ConfigureAwait(false);
+            if (disco.IsError)
+            {
+                if (disco.ErrorType == ResponseErrorType.Http)
+                {
+                    throw new InvalidOperationException($"Discovery endpoint {client.Url} is unavailable: {disco.Error}");
+                }
+                if (disco.ErrorType == ResponseErrorType.PolicyViolation)
+                {
+                    throw new InvalidOperationException($"Policy error while contacting the discovery endpoint {client.Url}: {disco.Error}");
+                }
+                if (disco.ErrorType == ResponseErrorType.Exception)
+                {
+                    throw new InvalidOperationException($"Error parsing discovery document from {client.Url}: {disco.Error}");
+                }
+            }
+
+            return disco.UserInfoEndpoint;
+        }
+        
+        private async Task<UserInfoClient> InitializeUserinfoClient(OAuth2IntrospectionOptions Options)
+        {
+            string endpoint;
+
+            if (Options.UserinfoEndpoint.IsPresent())
+            {
+                endpoint = Options.UserinfoEndpoint;
+            }
+            else
+            {
+                endpoint = await GetUserinfoEndpointFromDiscoveryDocument(Options).ConfigureAwait(false);
+                Options.UserinfoEndpoint = endpoint;
+            }
+
+            UserInfoClient client;
+            if (Options.UserinfoHttpHandler != null)
+            {
+                client = new UserInfoClient(
+                    endpoint,
+                    innerHttpMessageHandler: Options.UserinfoHttpHandler);
+            }
+            else
+            {
+                client = new UserInfoClient(endpoint);
+            }
+
+            client.Timeout = Options.DiscoveryTimeout;
+            return client;
+        }
+
     }
 }

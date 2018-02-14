@@ -88,20 +88,49 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             // Use a LazyAsync to ensure only one thread is requesting introspection for a token - the rest will wait for the result
             var lazyIntrospection = Options.LazyIntrospections.GetOrAdd(token, CreateLazyIntrospection);
+            var lazyUserinfo = Options.LazyUserinfos.GetOrAdd(token, CreateLazyUserinfos);
 
             try
             {
-                var response = await lazyIntrospection.Value.ConfigureAwait(false);
+                var introspectionResponse = await lazyIntrospection.Value.ConfigureAwait(false);
 
-                if (response.IsError)
+                if (introspectionResponse.IsError)
                 {
-                    _logger.LogError("Error returned from introspection endpoint: " + response.Error);
-                    return AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error);
+                    _logger.LogError("Error returned from introspection endpoint: " + introspectionResponse.Error);
+                    return AuthenticateResult.Fail("Error returned from introspection endpoint: " + introspectionResponse.Error);
                 }
 
-                if (response.IsActive)
+                if (introspectionResponse.IsActive)
                 {
-                    var ticket = CreateTicket(response.Claims);
+                    var claims = introspectionResponse.Claims;
+
+                    if (Options.GetClaimsFromUserinfoEndpoint)
+                    {
+                        var userinfoResponse = await lazyUserinfo.Value.ConfigureAwait(false);
+
+                        if (userinfoResponse.IsError)
+                        {
+                            _logger.LogError("Error returned from userinfo endpoint: " + userinfoResponse.Error);
+                            return AuthenticateResult.Fail("Error returned from userinfo endpoint: " + userinfoResponse.Error);
+                        }
+
+                        claims = claims.Union(userinfoResponse.Claims);
+                    }
+
+                    if (Options.RoleClaimValueSplitting)
+                    {
+                        var roleClaimQuery = from c in claims
+                                             where c.Type == Options.RoleClaimType
+                                             select c;
+                        if (roleClaimQuery.Count() == 1)
+                        {
+                            var roleClaim = roleClaimQuery.Single();
+                            var newRoleClaims = SplitClaim(roleClaim, Options.RoleClaimValueSplittingChar);
+                            claims = claims.Union(newRoleClaims);
+                        }
+                    }
+
+                    var ticket = CreateTicket(claims);
 
                     if (Options.SaveToken)
                     {
@@ -113,7 +142,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                     if (Options.EnableCaching)
                     {
-                        await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                        await _cache.SetClaimsAsync(token, claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                     }
 
                     return AuthenticateResult.Success(ticket);
@@ -129,15 +158,34 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 // If caching is off and it succeeded, the claims will be discarded.
                 // Either way, we want to remove the temporary store of claims for this token because it is only intended for de-duping fetch requests
                 Options.LazyIntrospections.TryRemove(token, out _);
+                Options.LazyUserinfos.TryRemove(token, out _);
             }
+        }
+
+        private IEnumerable<Claim> SplitClaim(Claim claim, char splitChar)
+        {
+            var claimValueSplit = claim.Value.Split(splitChar);
+
+            var newClaims = new List<Claim>();
+            foreach (var value in claimValueSplit)
+            {
+                newClaims.Add(new Claim(claim.Type, value));
+            }
+
+            return newClaims;
         }
 
         private AsyncLazy<IntrospectionResponse> CreateLazyIntrospection(string token)
         {
-            return new AsyncLazy<IntrospectionResponse>(() => LoadClaimsForToken(token));
+            return new AsyncLazy<IntrospectionResponse>(() => LoadIntrospectionClaimsForToken(token));
         }
 
-        private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
+        private AsyncLazy<UserInfoResponse> CreateLazyUserinfos(string token)
+        {
+            return new AsyncLazy<UserInfoResponse>(() => LoadUserinfoClaimsForToken(token));
+        }
+
+        private async Task<IntrospectionResponse> LoadIntrospectionClaimsForToken(string token)
         {
             var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
 
@@ -148,6 +196,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 ClientId = Options.ClientId,
                 ClientSecret = Options.ClientSecret
             }).ConfigureAwait(false);
+        }
+
+        private async Task<UserInfoResponse> LoadUserinfoClaimsForToken(string token)
+        {
+            var userinfoClient = await Options.UserinfoClient.Value.ConfigureAwait(false);
+
+            return await userinfoClient.GetAsync(token).ConfigureAwait(false);
         }
 
         private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
