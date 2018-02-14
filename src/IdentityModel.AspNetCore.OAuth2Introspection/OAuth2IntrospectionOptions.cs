@@ -86,7 +86,7 @@ namespace Microsoft.AspNetCore.Builder
         public TimeSpan UserinfoTimeout { get; set; } = TimeSpan.FromSeconds(60);
 
         /// <summary>
-        /// Specifies the HTTP handler for the introspection endpoint
+        /// Specifies the HTTP handler for the userinfo endpoint
         /// </summary>
         public HttpMessageHandler UserinfoHttpHandler { get; set; }
 
