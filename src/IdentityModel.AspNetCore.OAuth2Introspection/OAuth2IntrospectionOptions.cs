@@ -30,6 +30,12 @@ namespace Microsoft.AspNetCore.Builder
         public string IntrospectionEndpoint { get; set; }
 
         /// <summary>
+        /// Sets the URL of the userinfo endpoint.
+        /// If set, Authority is ignored.
+        /// </summary>
+        public string UserinfoEndpoint { get; set; }
+
+        /// <summary>
         /// Specifies the id of the introspection client.
         /// </summary>
         public string ClientId { get; set; }
@@ -75,6 +81,16 @@ namespace Microsoft.AspNetCore.Builder
         public HttpMessageHandler IntrospectionHttpHandler { get; set; }
 
         /// <summary>
+        /// Specifies the timeout for contacting the userinfo endpoint
+        /// </summary>
+        public TimeSpan UserinfoTimeout { get; set; } = TimeSpan.FromSeconds(60);
+
+        /// <summary>
+        /// Specifies the HTTP handler for the introspection endpoint
+        /// </summary>
+        public HttpMessageHandler UserinfoHttpHandler { get; set; }
+
+        /// <summary>
         /// Specifies whether tokens that contain dots (most likely a JWT) are skipped
         /// </summary>
         public bool SkipTokensWithDots { get; set; } = true;
@@ -83,6 +99,22 @@ namespace Microsoft.AspNetCore.Builder
         /// Specifies whether the token should be stored
         /// </summary>
         public bool SaveToken { get; set; } = true;
+
+        /// <summary>
+        /// Specifies whether to get claims from userinfo endpoint and add them to the authentication ticket. Default is false.
+        /// </summary>
+        public bool GetClaimsFromUserinfoEndpoint { get; set; } = false;
+
+        /// <summary>
+        /// Specifies whether to try to split the value of the role claim, for use with IPs sending all roles in a single claim. Default is false.
+        /// </summary>
+        public bool RoleClaimValueSplitting { get; set; } = false;
+
+        /// <summary>
+        /// Specifies the character to be used for splitting the role claim value, if RoleClaimValueSplitting is set to "true". Default is ','.
+        /// </summary>
+        public char RoleClaimValueSplittingChar { get; set; } = ',';
+
 
         /// <summary>
         /// Specifies whether the outcome of the toke validation should be cached. This reduces the load on the introspection endpoint at the STS
@@ -101,6 +133,9 @@ namespace Microsoft.AspNetCore.Builder
 
         internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
         internal ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> LazyIntrospections { get; set; }
+
+        internal AsyncLazy<UserInfoClient> UserinfoClient { get; set; }
+        internal ConcurrentDictionary<string, AsyncLazy<UserInfoResponse>> LazyUserinfos { get; set; }
 
         /// <summary>
         /// Check that the options are valid. Should throw an exception if things are not ok.
@@ -123,6 +158,14 @@ namespace Microsoft.AspNetCore.Builder
             if (ClientId.IsMissing() && IntrospectionHttpHandler == null)
             {
                 throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
+            }
+
+            if (GetClaimsFromUserinfoEndpoint)
+            {
+                if (Authority.IsMissing() && UserinfoEndpoint.IsMissing())
+                {
+                    throw new InvalidOperationException("You must either set Authority or UserinfoEndpoint");
+                }
             }
 
             if (TokenRetriever == null)
