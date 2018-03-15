@@ -139,7 +139,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
         {
-            var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
+            var introspectionClient = Options.IntrospectionClient.Value;
 
             return await introspectionClient.SendAsync(new IntrospectionRequest
             {

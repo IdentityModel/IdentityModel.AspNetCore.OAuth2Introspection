@@ -99,7 +99,7 @@ namespace Microsoft.AspNetCore.Builder
         /// </summary>
         public Func<HttpRequest, string> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();
 
-        internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
+        internal Lazy<IntrospectionClient> IntrospectionClient { get; set; }
         internal ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> LazyIntrospections { get; set; }
 
         /// <summary>

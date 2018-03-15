@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using IdentityModel.Client;
@@ -30,7 +31,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 throw new ArgumentException("Caching is enabled, but no IDistributedCache is found in the services collection", nameof(_cache));
             }
 
-            options.IntrospectionClient = new AsyncLazy<IntrospectionClient>(() => InitializeIntrospectionClient(options));
+            options.IntrospectionClient = new Lazy<IntrospectionClient>(() => InitializeIntrospectionClient(options).Result, LazyThreadSafetyMode.PublicationOnly);
             options.LazyIntrospections = new ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>>();
         }
 

@@ -164,5 +164,27 @@ namespace Tests
 
             responseData.Should().Contain("token", expectedToken);
         }
+
+        [Fact]
+        public async Task ActiveToken_With_Discovery_Unavailable_On_First_Request()
+        {
+            var handler = new DiscoveryEndpointHandler();
+
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.DiscoveryHttpHandler = handler;
+                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+            });
+
+            client.SetBearerToken("sometoken");
+
+            handler.IsFailureTest = true;
+            await Assert.ThrowsAsync<AggregateException>(async () => await client.GetAsync("http://test"));
+            
+            handler.IsFailureTest = false;
+            var result = await client.GetAsync("http://test");
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
     }
 }
