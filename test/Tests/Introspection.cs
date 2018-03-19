@@ -180,7 +180,7 @@ namespace Tests
             client.SetBearerToken("sometoken");
 
             handler.IsFailureTest = true;
-            await Assert.ThrowsAsync<AggregateException>(async () => await client.GetAsync("http://test"));
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await client.GetAsync("http://test"));
             
             handler.IsFailureTest = false;
             var result = await client.GetAsync("http://test");
