@@ -9,25 +9,26 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
 {
     internal sealed class AsyncLazy<T>
     {
-        private Lazy<Task<T>> _lazyFactory;
+        private Lazy<Task<T>> _lazyTaskFactory;
         private readonly Func<Task<T>> _taskFactory;
+        private readonly object _mutex = new object();
 
         public AsyncLazy(Func<Task<T>> taskFactory)
         {
             _taskFactory = taskFactory;
-            _lazyFactory = InitLazy(_taskFactory);
+            _lazyTaskFactory = InitLazy(_taskFactory);
         }
  
         public Task<T> GetAsync()
         {
-            lock (_taskFactory)
+            lock (_mutex)
             {
-                if (_lazyFactory.IsValueCreated && _lazyFactory.Value.IsFaulted)
+                if (_lazyTaskFactory.IsValueCreated && _lazyTaskFactory.Value.IsFaulted)
                 {
-                    _lazyFactory = InitLazy(_taskFactory);
+                    _lazyTaskFactory = InitLazy(_taskFactory);
                 }
 
-                return _lazyFactory.Value;
+                return _lazyTaskFactory.Value;
             }
         }
 
