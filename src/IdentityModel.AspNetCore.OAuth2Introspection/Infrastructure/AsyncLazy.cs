@@ -21,6 +21,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
  
         public Task<T> GetAsync()
         {
+            if (!_lazyTaskFactory.IsValueCreated || !_lazyTaskFactory.Value.IsFaulted) return _lazyTaskFactory.Value;
+
             lock (_mutex)
             {
                 if (_lazyTaskFactory.IsValueCreated && _lazyTaskFactory.Value.IsFaulted)
