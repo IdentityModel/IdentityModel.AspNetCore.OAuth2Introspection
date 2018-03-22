@@ -38,7 +38,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
 
         private static Lazy<Task<T>> InitLazy(Func<Task<T>> taskFactory)
         {
-            return new Lazy<Task<T>>(() => Task.Factory.StartNew(taskFactory).Unwrap(), LazyThreadSafetyMode.ExecutionAndPublication);
+            return new Lazy<Task<T>>(() => Task.Run(taskFactory));
         }
     }
 }
