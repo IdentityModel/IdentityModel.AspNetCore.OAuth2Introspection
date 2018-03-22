@@ -11,7 +11,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
     {
         private Lazy<Task<T>> _lazyTaskFactory;
         private readonly Func<Task<T>> _taskFactory;
-        private readonly object _mutex = new object();
+        private readonly object _lazyInitializationGuard = new object();
 
         public AsyncLazy(Func<Task<T>> taskFactory)
         {
@@ -21,9 +21,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
  
         public Task<T> GetAsync()
         {
-            if (!_lazyTaskFactory.IsValueCreated || !_lazyTaskFactory.Value.IsFaulted) return _lazyTaskFactory.Value;
+            //If the lazy value is not yet created, we should just return the lazy value (which will create it)
+            //If the value has been created and the value (which is a Task<T>) is not faulted, we should just return the value;
+            if(!(_lazyTaskFactory.IsValueCreated && _lazyTaskFactory.Value.IsFaulted)) return _lazyTaskFactory.Value;
 
-            lock (_mutex)
+            lock (_lazyInitializationGuard)
             {
                 if (_lazyTaskFactory.IsValueCreated && _lazyTaskFactory.Value.IsFaulted)
                 {
