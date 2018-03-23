@@ -17,21 +17,25 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
             _taskFactory = taskFactory;
             _lazyTaskFactory = InitLazy(_taskFactory);
         }
- 
-        public Task<T> GetAsync()
+
+        public Task<T> Value
         {
-            //If the lazy value is not yet created, we should just return the lazy value (which will create it)
-            //If the value has been created and the value (which is a Task<T>) is not faulted, we should just return the value;
-            if(!(_lazyTaskFactory.IsValueCreated && _lazyTaskFactory.Value.IsFaulted)) return _lazyTaskFactory.Value;
-
-            lock (_lazyInitializationGuard)
+            get
             {
-                if (_lazyTaskFactory.IsValueCreated && _lazyTaskFactory.Value.IsFaulted)
-                {
-                    _lazyTaskFactory = InitLazy(_taskFactory);
-                }
+                //If the lazy value is not yet created, we should just return the lazy value (which will create it)
+                //If the value has been created and the value (which is a Task<T>) is not faulted, we should just return the value;
+                if (!(_lazyTaskFactory.IsValueCreated && _lazyTaskFactory.Value.IsFaulted))
+                    return _lazyTaskFactory.Value;
 
-                return _lazyTaskFactory.Value;
+                lock (_lazyInitializationGuard)
+                {
+                    if (_lazyTaskFactory.IsValueCreated && _lazyTaskFactory.Value.IsFaulted)
+                    {
+                        _lazyTaskFactory = InitLazy(_taskFactory);
+                    }
+
+                    return _lazyTaskFactory.Value;
+                }
             }
         }
 

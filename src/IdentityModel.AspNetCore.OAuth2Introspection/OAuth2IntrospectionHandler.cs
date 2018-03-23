@@ -91,7 +91,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             try
             {
-                var response = await lazyIntrospection.GetAsync().ConfigureAwait(false);
+                var response = await lazyIntrospection.Value.ConfigureAwait(false);
 
                 if (response.IsError)
                 {
@@ -139,7 +139,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
         {
-            var introspectionClient = await Options.IntrospectionClient.GetAsync().ConfigureAwait(false);
+            var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
 
             return await introspectionClient.SendAsync(new IntrospectionRequest
             {
