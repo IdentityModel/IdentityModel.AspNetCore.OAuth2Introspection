@@ -13,8 +13,15 @@ namespace Tests.Util
     {
         public string Endpoint { get; set; }
 
+        public bool IsFailureTest { get; set; } = false;
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
         {
+            if (IsFailureTest)
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+            }
+
             if (request.RequestUri.AbsoluteUri.ToString() == "https://authority.com/.well-known/openid-configuration")
             {
                 Endpoint = request.RequestUri.AbsoluteUri;
