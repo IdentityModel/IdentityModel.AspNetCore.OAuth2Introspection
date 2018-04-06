@@ -55,6 +55,14 @@ namespace Microsoft.AspNetCore.Builder
         public DiscoveryPolicy DiscoveryPolicy { get; set; } = new DiscoveryPolicy();
 
         /// <summary>
+        /// Gets or sets the basic authentication header style (RFC6749 vs RFC2617). Defaults to RFC6749.
+        /// </summary>
+        /// <value>
+        /// The basic authentication header style.
+        /// </value>
+        public BasicAuthenticationHeaderStyle BasicAuthenticationHeaderStyle { get; set; } = BasicAuthenticationHeaderStyle.Rfc6749;
+
+        /// <summary>
         /// Specifies the timout for contacting the discovery endpoint
         /// </summary>
         public TimeSpan DiscoveryTimeout { get; set; } = TimeSpan.FromSeconds(60);

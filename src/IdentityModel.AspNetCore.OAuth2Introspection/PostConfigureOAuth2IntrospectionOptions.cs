@@ -89,6 +89,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             {
                 client = new IntrospectionClient(
                     endpoint,
+                    headerStyle: Options.BasicAuthenticationHeaderStyle,
                     innerHttpMessageHandler: Options.IntrospectionHttpHandler);
             }
             else
