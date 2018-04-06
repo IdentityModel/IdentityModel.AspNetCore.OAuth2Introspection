@@ -20,7 +20,7 @@ namespace Tests
             Action act = () => PipelineFactory.CreateClient((options) => { })
             .GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldThrow<InvalidOperationException>()
+            act.Should().Throw<InvalidOperationException>()
                 .WithMessage("You must either set Authority or IntrospectionEndpoint");
         }
 
@@ -32,7 +32,7 @@ namespace Tests
                 options.Authority = "http://foo";
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldThrow<InvalidOperationException>()
+            act.Should().Throw<InvalidOperationException>()
                 .WithMessage("You must either set a ClientId or set an introspection HTTP handler");
         }
 
@@ -46,7 +46,7 @@ namespace Tests
                 options.TokenRetriever = null;
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldThrow<ArgumentException>()
+            act.Should().Throw<ArgumentException>()
                 .Where(e => e.Message.StartsWith("TokenRetriever must be set"));
         }
 
@@ -60,7 +60,7 @@ namespace Tests
 
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldNotThrow();
+            act.Should().NotThrow();
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace Tests
 
             }, addCaching: true).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldNotThrow();
+            act.Should().NotThrow();
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace Tests
 
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldThrow<ArgumentException>()
+            act.Should().Throw<ArgumentException>()
                 .Where(e => e.Message.StartsWith("Caching is enabled, but no IDistributedCache is found in the services collection"));
         }
 
@@ -102,7 +102,7 @@ namespace Tests
 
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldNotThrow();
+            act.Should().NotThrow();
         }
 
         [Fact]
@@ -114,7 +114,7 @@ namespace Tests
                 options.ClientId = "scope";
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldNotThrow();
+            act.Should().NotThrow();
         }
 
         [Fact]
