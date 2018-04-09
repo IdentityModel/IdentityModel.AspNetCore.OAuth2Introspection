@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication;
 using IdentityModel.Client;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using System.Collections.Concurrent;
+using IdentityModel;
 
 namespace Microsoft.AspNetCore.Builder
 {
@@ -38,6 +39,11 @@ namespace Microsoft.AspNetCore.Builder
         /// Specifies the shared secret of the introspection client.
         /// </summary>
         public string ClientSecret { get; set; }
+
+        /// <summary>
+        /// Specifies the token type hint of the introspection client.
+        /// </summary>
+        public string TokenTypeHint { get; set; } = OidcConstants.TokenTypes.AccessToken;
 
         /// <summary>
         /// Specifies the claim type to use for the name claim (defaults to 'name')

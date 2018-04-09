@@ -144,7 +144,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return await introspectionClient.SendAsync(new IntrospectionRequest
             {
                 Token = token,
-                TokenTypeHint = OidcConstants.TokenTypes.AccessToken,
+                TokenTypeHint = Options.TokenTypeHint,
                 ClientId = Options.ClientId,
                 ClientSecret = Options.ClientSecret
             }).ConfigureAwait(false);
