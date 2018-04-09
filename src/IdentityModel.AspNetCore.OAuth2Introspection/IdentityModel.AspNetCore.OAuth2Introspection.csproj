@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>ASP.NET Core 2.0 Middleware for validating tokens using OAuth 2.0 introspection</Description>
-    <VersionPrefix>3.2.0</VersionPrefix>
+    <VersionPrefix>3.2.1</VersionPrefix>
     <!--<VersionSuffix>preview1</VersionSuffix>-->
     <Authors>Dominick Baier;Brock Allen</Authors>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
