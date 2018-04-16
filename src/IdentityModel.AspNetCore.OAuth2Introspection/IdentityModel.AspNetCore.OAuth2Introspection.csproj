@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>ASP.NET Core 2.0 Middleware for validating tokens using OAuth 2.0 introspection</Description>
-    <VersionPrefix>3.2.1</VersionPrefix>
+    <VersionPrefix>3.3.0</VersionPrefix>
     <!--<VersionSuffix>preview1</VersionSuffix>-->
     <Authors>Dominick Baier;Brock Allen</Authors>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
@@ -13,21 +13,14 @@
     <PackageLicenseUrl>https://github.com/IdentityModel/IdentityModel.AspNetCore.OAuth2Introspection/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/identitymodel/identitymodel.aspnetcore.oauth2introspection</RepositoryUrl>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard2.0\IdentityModel.AspNetCore.OAuth2Introspection.xml</DocumentationFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
-    <DocumentationFile>bin\Debug\netstandard2.0\IdentityModel.AspNetCore.OAuth2Introspection.xml</DocumentationFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.1" />
-    <PackageReference Include="IdentityModel" Version="3.4.0" />    
+    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.0" />
+    <PackageReference Include="IdentityModel" Version="3.6.0" />    
   </ItemGroup>
 </Project>
