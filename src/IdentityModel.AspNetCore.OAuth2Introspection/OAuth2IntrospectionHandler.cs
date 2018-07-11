@@ -44,6 +44,17 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             _cache = cache;
         }
 
+
+        /// <summary>
+        /// The handler calls methods on the events which give the application control at certain points where processing is occurring. 
+        /// If it is not provided a default instance is supplied which does nothing when the methods are called.
+        /// </summary>
+        protected new OAuth2IntrospectionEvents Events
+        {
+            get { return (OAuth2IntrospectionEvents)base.Events; }
+            set { base.Events = value; }
+        }
+
         /// <summary>
         /// Tries to authenticate a reference token on the current request
         /// </summary>
@@ -68,7 +79,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 var claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
                 if (claims != null)
                 {
-                    var ticket = CreateTicket(claims);
+                    var ticket = await CreateTicket(claims);
 
                     _logger.LogTrace("Token found in cache.");
 
@@ -101,7 +112,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 if (response.IsActive)
                 {
-                    var ticket = CreateTicket(response.Claims);
+                    var ticket = await CreateTicket(response.Claims);
 
                     if (Options.SaveToken)
                     {
@@ -150,10 +161,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }).ConfigureAwait(false);
         }
 
-        private AuthenticationTicket CreateTicket(IEnumerable<Claim> claims)
+        private async Task<AuthenticationTicket> CreateTicket(IEnumerable<Claim> claims)
         {
             var id = new ClaimsIdentity(claims, Scheme.Name, Options.NameClaimType, Options.RoleClaimType);
             var principal = new ClaimsPrincipal(id);
+
+            await Events.CreatingTicket(principal);
 
             return new AuthenticationTicket(principal, new AuthenticationProperties(), Scheme.Name);
         }

@@ -19,6 +19,13 @@ namespace Microsoft.AspNetCore.Builder
     public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     {
         /// <summary>
+        /// Dafault options constructor
+        /// </summary>
+        public OAuth2IntrospectionOptions()
+        {
+            Events = new OAuth2IntrospectionEvents();
+        }
+        /// <summary>
         /// Sets the base-path of the token provider.
         /// If set, the OpenID Connect discovery document will be used to find the introspection endpoint.
         /// </summary>
@@ -112,6 +119,15 @@ namespace Microsoft.AspNetCore.Builder
         /// Specifies the method how to retrieve the token from the HTTP request
         /// </summary>
         public Func<HttpRequest, string> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();
+
+        /// <summary>
+        /// Gets or sets the <see cref="OAuth2IntrospectionEvents"/> used to handle authentication events.
+        /// </summary>
+        public new OAuth2IntrospectionEvents Events
+        {
+            get { return (OAuth2IntrospectionEvents)base.Events; }
+            set { base.Events = value; }
+        }
 
         internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
         internal ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> LazyIntrospections { get; set; }
