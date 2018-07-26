@@ -76,7 +76,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (Options.EnableCaching)
             {
-                var claims = await _cache.GetClaimsAsync(token).ConfigureAwait(false);
+                var key = $"{Options.CacheKeyPrefix}{token}";
+                var claims = await _cache.GetClaimsAsync(key).ConfigureAwait(false);
                 if (claims != null)
                 {
                     var ticket = await CreateTicket(claims);
@@ -124,7 +125,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                     if (Options.EnableCaching)
                     {
-                        await _cache.SetClaimsAsync(token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                        var key = $"{Options.CacheKeyPrefix}{token}";
+                        await _cache.SetClaimsAsync(key, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                     }
 
                     return AuthenticateResult.Success(ticket);
