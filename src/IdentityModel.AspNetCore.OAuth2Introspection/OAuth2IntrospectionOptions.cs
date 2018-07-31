@@ -116,6 +116,11 @@ namespace Microsoft.AspNetCore.Builder
         public TimeSpan CacheDuration { get; set; } = TimeSpan.FromMinutes(5);
 
         /// <summary>
+        /// Specifies the prefix of the cache key (token).
+        /// </summary>
+        public string CacheKeyPrefix { get; set; } = string.Empty;
+
+        /// <summary>
         /// Specifies the method how to retrieve the token from the HTTP request
         /// </summary>
         public Func<HttpRequest, string> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();
