@@ -63,6 +63,13 @@ namespace Microsoft.AspNetCore.Builder
         public string RoleClaimType { get; set; } = "role";
 
         /// <summary>
+        /// Specifies the authentication type to use for the authenticated identity.
+        /// If not set, the authentication scheme name is used as the authentication
+        /// type (defaults to null).
+        /// </summary>
+        public string AuthenticationType { get; set; }
+
+        /// <summary>
         /// Specifies the policy for the discovery client
         /// </summary>
         public DiscoveryPolicy DiscoveryPolicy { get; set; } = new DiscoveryPolicy();
