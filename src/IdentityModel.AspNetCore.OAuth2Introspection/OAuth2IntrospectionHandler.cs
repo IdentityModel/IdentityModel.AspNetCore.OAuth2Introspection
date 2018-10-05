@@ -65,13 +65,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (token.IsMissing())
             {
-                return AuthenticateResult.NoResult();
+                return ReportNonSuccessAndReturn(AuthenticateResult.NoResult());
             }
 
             if (token.Contains('.') && Options.SkipTokensWithDots)
             {
                 _logger.LogTrace("Token contains a dot - skipped because SkipTokensWithDots is set.");
-                return AuthenticateResult.NoResult();
+                return ReportNonSuccessAndReturn(AuthenticateResult.NoResult());
             }
 
             if (Options.EnableCaching)
@@ -108,7 +108,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 if (response.IsError)
                 {
                     _logger.LogError("Error returned from introspection endpoint: " + response.Error);
-                    return AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error);
+                    return ReportNonSuccessAndReturn(AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error));
                 }
 
                 if (response.IsActive)
@@ -133,7 +133,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 }
                 else
                 {
-                    return AuthenticateResult.Fail("Token is not active.");
+                    return ReportNonSuccessAndReturn(AuthenticateResult.Fail("Token is not active."));
                 }
             }
             finally
@@ -143,6 +143,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 // Either way, we want to remove the temporary store of claims for this token because it is only intended for de-duping fetch requests
                 Options.LazyIntrospections.TryRemove(token, out _);
             }
+        }
+
+        private AuthenticateResult ReportNonSuccessAndReturn(AuthenticateResult result)
+        {
+            Options.Events.OnAuthenticationFailed(result);
+            return result;
         }
 
         private AsyncLazy<IntrospectionResponse> CreateLazyIntrospection(string token)
