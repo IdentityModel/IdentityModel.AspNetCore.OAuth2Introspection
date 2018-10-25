@@ -165,7 +165,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         private async Task<AuthenticationTicket> CreateTicket(IEnumerable<Claim> claims)
         {
-            var id = new ClaimsIdentity(claims, Scheme.Name, Options.NameClaimType, Options.RoleClaimType);
+            var authenticationType = Options.AuthenticationType ?? Scheme.Name;
+            var id = new ClaimsIdentity(claims, authenticationType, Options.NameClaimType, Options.RoleClaimType);
             var principal = new ClaimsPrincipal(id);
 
             await Events.CreatingTicket(principal);
