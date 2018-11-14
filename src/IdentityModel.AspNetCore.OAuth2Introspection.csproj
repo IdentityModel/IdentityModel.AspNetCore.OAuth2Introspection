@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>ASP.NET Core 2.0 Middleware for validating tokens using OAuth 2.0 introspection</Description>
-    <VersionPrefix>3.4.1</VersionPrefix>
+    <VersionPrefix>3.5.0</VersionPrefix>
     <!--<VersionSuffix>preview1</VersionSuffix>-->
     <Authors>Dominick Baier;Brock Allen</Authors>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
@@ -29,7 +29,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.0" />
 
-    <PackageReference Include="IdentityModel" Version="3.8.0" />
+    <PackageReference Include="IdentityModel" Version="3.10.0" />
 
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All"/>
   </ItemGroup>
