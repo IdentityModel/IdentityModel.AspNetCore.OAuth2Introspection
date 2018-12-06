@@ -1,18 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>ASP.NET Core 2.0 Middleware for validating tokens using OAuth 2.0 introspection</Description>
-    <VersionPrefix>3.5.0</VersionPrefix>
-    <!--<VersionSuffix>preview1</VersionSuffix>-->
-    <Authors>Dominick Baier;Brock Allen</Authors>
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <PackageId>IdentityModel.AspNetCore.OAuth2Introspection</PackageId>
+    <Description>ASP.NET Core authentication handler for validating tokens using OAuth 2.0 introspection</Description>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+
+    <Authors>Dominick Baier;Brock Allen</Authors>
     <PackageTags>OAuth2;OAuth 2.0;Introspection;Security;Identity;IdentityServer</PackageTags>
     <PackageIconUrl>https://identityserver.github.io/Documentation/assets/images/icons/IDmodel_icon128.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/IdentityModel/IdentityModel.AspNetCore.OAuth2Introspection</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/IdentityModel/IdentityModel.AspNetCore.OAuth2Introspection/blob/master/LICENSE</PackageLicenseUrl>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>git://github.com/identitymodel/identitymodel.aspnetcore.oauth2introspection</RepositoryUrl>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- Declare that the Repository URL can be published to NuSpec -->
@@ -29,7 +26,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.0" />
 
-    <PackageReference Include="IdentityModel" Version="3.10.0" />
+    <PackageReference Include="IdentityModel" Version="3.10.4" />
 
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All"/>
   </ItemGroup>
