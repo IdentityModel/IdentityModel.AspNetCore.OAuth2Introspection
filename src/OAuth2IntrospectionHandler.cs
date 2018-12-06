@@ -159,14 +159,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
         {
             var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
-
-            return await introspectionClient.SendAsync(new IntrospectionRequest
-            {
-                Token = token,
-                TokenTypeHint = Options.TokenTypeHint,
-                ClientId = Options.ClientId,
-                ClientSecret = Options.ClientSecret
-            }).ConfigureAwait(false);
+            return await introspectionClient.Introspect(token, Options.TokenTypeHint).ConfigureAwait(false);
         }
 
         private async Task<AuthenticationTicket> CreateTicket(IEnumerable<Claim> claims)

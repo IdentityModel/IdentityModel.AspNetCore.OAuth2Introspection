@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Net.Http;
 using System.Threading.Tasks;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using IdentityModel.Client;
@@ -29,76 +30,66 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             {
                 throw new ArgumentException("Caching is enabled, but no IDistributedCache is found in the services collection", nameof(_cache));
             }
+            
+            if (options.Backchannel == null)
+            {
+                options.Backchannel = new HttpClient(options.BackchannelHttpHandler ?? new HttpClientHandler());
+                options.Backchannel.DefaultRequestHeaders.UserAgent.ParseAdd("IdentityModel.AspNetCore.OAuth2Introspection");
+                options.Backchannel.Timeout = options.BackchannelTimeout;
+                options.Backchannel.MaxResponseContentBufferSize = 1024 * 1024 * 10; // 10 MB
+            }
 
-            options.IntrospectionClient = new AsyncLazy<IntrospectionClient>(() => InitializeIntrospectionClient(options));
+            options.IntrospectionClient = new AsyncLazy<Infrastructure.IntrospectionClient>(() => InitializeIntrospectionClient(options));
             options.LazyIntrospections = new ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>>();
         }
 
-        private async Task<string> GetIntrospectionEndpointFromDiscoveryDocument(OAuth2IntrospectionOptions Options)
+        private async Task<string> GetIntrospectionEndpointFromDiscoveryDocument(OAuth2IntrospectionOptions options)
         {
-            DiscoveryClient client;
-
-            if (Options.DiscoveryHttpHandler != null)
+            var disco = await options.Backchannel.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
             {
-                client = new DiscoveryClient(Options.Authority, Options.DiscoveryHttpHandler);
-            }
-            else
-            {
-                client = new DiscoveryClient(Options.Authority);
-            }
-
-            client.Timeout = Options.DiscoveryTimeout;
-            client.Policy = Options?.DiscoveryPolicy ?? new DiscoveryPolicy();
+                Address = options.Authority,
+                Policy = options?.DiscoveryPolicy ?? new DiscoveryPolicy()
+            }).ConfigureAwait(false);
             
-            var disco = await client.GetAsync().ConfigureAwait(false);
             if (disco.IsError)
             {
                 if (disco.ErrorType == ResponseErrorType.Http)
                 {
-                    throw new InvalidOperationException($"Discovery endpoint {client.Url} is unavailable: {disco.Error}");
+                    throw new InvalidOperationException($"Discovery endpoint {options.Authority} is unavailable: {disco.Error}");
                 }
                 if (disco.ErrorType == ResponseErrorType.PolicyViolation)
                 {
-                    throw new InvalidOperationException($"Policy error while contacting the discovery endpoint {client.Url}: {disco.Error}");
+                    throw new InvalidOperationException($"Policy error while contacting the discovery endpoint {options.Authority}: {disco.Error}");
                 }
                 if (disco.ErrorType == ResponseErrorType.Exception)
                 {
-                    throw new InvalidOperationException($"Error parsing discovery document from {client.Url}: {disco.Error}");
+                    throw new InvalidOperationException($"Error parsing discovery document from {options.Authority}: {disco.Error}");
                 }
             }
 
             return disco.IntrospectionEndpoint;
         }
 
-        private async Task<IntrospectionClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions Options)
+        private async Task<Infrastructure.IntrospectionClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions options)
         {
             string endpoint;
 
-            if (Options.IntrospectionEndpoint.IsPresent())
+            if (options.IntrospectionEndpoint.IsPresent())
             {
-                endpoint = Options.IntrospectionEndpoint;
+                endpoint = options.IntrospectionEndpoint;
             }
             else
             {
-                endpoint = await GetIntrospectionEndpointFromDiscoveryDocument(Options).ConfigureAwait(false);
-                Options.IntrospectionEndpoint = endpoint;
+                endpoint = await GetIntrospectionEndpointFromDiscoveryDocument(options).ConfigureAwait(false);
+                options.IntrospectionEndpoint = endpoint;
             }
 
-            IntrospectionClient client;
-            if (Options.IntrospectionHttpHandler != null)
+            return new Infrastructure.IntrospectionClient(options.Backchannel, new IntrospectionClientOptions
             {
-                client = new IntrospectionClient(
-                    endpoint,
-                    headerStyle: Options.BasicAuthenticationHeaderStyle,
-                    innerHttpMessageHandler: Options.IntrospectionHttpHandler);
-            }
-            else
-            {
-                client = new IntrospectionClient(endpoint);
-            }
-
-            client.Timeout = Options.DiscoveryTimeout;
-            return client;
+                Address = endpoint,
+                ClientId = options.ClientId, 
+                ClientSecret = options.ClientSecret
+            });
         }
     }
 }

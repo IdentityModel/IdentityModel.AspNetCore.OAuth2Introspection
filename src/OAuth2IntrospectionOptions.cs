@@ -82,25 +82,31 @@ namespace Microsoft.AspNetCore.Builder
         /// </value>
         public BasicAuthenticationHeaderStyle BasicAuthenticationHeaderStyle { get; set; } = BasicAuthenticationHeaderStyle.Rfc6749;
 
+        // TODO
+        public HttpClient Backchannel { get; set; }
+        public HttpMessageHandler BackchannelHttpHandler { get; set; }
+        public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(60);
+
+        
         /// <summary>
         /// Specifies the timout for contacting the discovery endpoint
         /// </summary>
-        public TimeSpan DiscoveryTimeout { get; set; } = TimeSpan.FromSeconds(60);
+        //public TimeSpan DiscoveryTimeout { get; set; } = TimeSpan.FromSeconds(60);
 
         /// <summary>
         /// Specifies the HTTP handler for the discovery endpoint
         /// </summary>
-        public HttpMessageHandler DiscoveryHttpHandler { get; set; }
+        //public HttpMessageHandler DiscoveryHttpHandler { get; set; }
 
         /// <summary>
         /// Specifies the timeout for contacting the introspection endpoint
         /// </summary>
-        public TimeSpan IntrospectionTimeout { get; set; } = TimeSpan.FromSeconds(60);
+        //public TimeSpan IntrospectionTimeout { get; set; } = TimeSpan.FromSeconds(60);
 
         /// <summary>
         /// Specifies the HTTP handler for the introspection endpoint
         /// </summary>
-        public HttpMessageHandler IntrospectionHttpHandler { get; set; }
+        //public HttpMessageHandler IntrospectionHttpHandler { get; set; }
 
         /// <summary>
         /// Specifies whether tokens that contain dots (most likely a JWT) are skipped
@@ -141,7 +147,7 @@ namespace Microsoft.AspNetCore.Builder
             set { base.Events = value; }
         }
 
-        internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
+        internal AsyncLazy<IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure.IntrospectionClient> IntrospectionClient { get; set; }
         internal ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> LazyIntrospections { get; set; }
 
         /// <summary>
@@ -162,10 +168,10 @@ namespace Microsoft.AspNetCore.Builder
                 throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
             }
 
-            if (ClientId.IsMissing() && IntrospectionHttpHandler == null)
-            {
-                throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
-            }
+            //if (ClientId.IsMissing() && IntrospectionHttpHandler == null)
+            //{
+            //    throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
+            //}
 
             if (TokenRetriever == null)
             {

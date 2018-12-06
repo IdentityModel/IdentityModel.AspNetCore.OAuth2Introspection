@@ -25,18 +25,6 @@ namespace Tests
         }
 
         [Fact]
-        public void Authority_No_Scope_Details()
-        {
-            Action act = () => PipelineFactory.CreateClient((options) =>
-            {
-                options.Authority = "http://foo";
-            }).GetAsync("http://test").GetAwaiter().GetResult();
-
-            act.Should().Throw<InvalidOperationException>()
-                .WithMessage("You must either set a ClientId or set an introspection HTTP handler");
-        }
-
-        [Fact]
         public void No_Token_Retriever()
         {
             Action act = () => PipelineFactory.CreateClient(options =>
@@ -98,7 +86,7 @@ namespace Tests
             Action act = () => PipelineFactory.CreateClient(options =>
             {
                 options.IntrospectionEndpoint = "http://endpoint";
-                options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                options.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
@@ -127,11 +115,10 @@ namespace Tests
             {
                 options.Authority = "https://authority.com/";
                 options.ClientId = "scope";
-
-                options.DiscoveryHttpHandler = handler;
+                
                 options.DiscoveryPolicy.RequireKeySet = false;
 
-                options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                options.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
                 ops = options;
             });

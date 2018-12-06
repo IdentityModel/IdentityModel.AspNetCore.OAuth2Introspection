@@ -19,8 +19,6 @@ namespace Tests
         Action<OAuth2IntrospectionOptions> _options = (o) =>
         {
             o.Authority = "https://authority.com";
-            o.DiscoveryHttpHandler = new DiscoveryEndpointHandler();
-
             o.DiscoveryPolicy.RequireKeySet = false;
 
             o.ClientId = "scope";
@@ -33,7 +31,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
             });
 
             client.SetBearerToken("sometoken");
@@ -48,7 +46,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
             });
 
             client.SetBearerToken("sometoken");
@@ -64,7 +62,7 @@ namespace Tests
             {
                 _options(o);
 
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
 
@@ -86,7 +84,7 @@ namespace Tests
             {
                 _options(o);
 
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
             }, true);
@@ -106,7 +104,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
 
             }); client.SetBearerToken("sometoken");
 
@@ -122,7 +120,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
                 o.SaveToken = true;
             });
 
@@ -145,7 +143,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
                 o.SaveToken = true;
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
@@ -168,21 +166,20 @@ namespace Tests
         [Fact]
         public async Task ActiveToken_With_Discovery_Unavailable_On_First_Request()
         {
-            var handler = new DiscoveryEndpointHandler();
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.DiscoveryHttpHandler = handler;
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                o.BackchannelHttpHandler = handler;
             });
 
             client.SetBearerToken("sometoken");
 
-            handler.IsFailureTest = true;
+            handler.IsDiscoveryFailureTest = true;
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await client.GetAsync("http://test"));
             
-            handler.IsFailureTest = false;
+            handler.IsDiscoveryFailureTest = false;
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.OK);
         }

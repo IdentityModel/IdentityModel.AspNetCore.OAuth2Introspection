@@ -24,7 +24,9 @@ namespace Tests.Util
         }
 
         public Dictionary<string, object> AdditionalValues { get; set; } = new Dictionary<string, object>();
-        public string Endpoint { get; set; }
+        public string IntrospectionEndpoint { get; set; }
+        public string DiscoveryEndpoint { get; set; }
+        public bool IsDiscoveryFailureTest { get; set; } = false;
 
         public IntrospectionEndpointHandler(Behavior behavior, TimeSpan? ttl = null)
         {
@@ -38,7 +40,47 @@ namespace Tests.Util
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Endpoint = request.RequestUri.AbsoluteUri;
+            if (request.RequestUri.AbsoluteUri.Contains("well-known"))
+            {
+                return SendDiscoveryAsync(request, cancellationToken);
+            }
+            else
+            {
+                return SendIntrospectionAsync(request, cancellationToken);
+            }
+        }
+
+        protected Task<HttpResponseMessage> SendDiscoveryAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+        {
+            if (IsDiscoveryFailureTest)
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+            }
+
+            if (request.RequestUri.AbsoluteUri.ToString() == "https://authority.com/.well-known/openid-configuration")
+            {
+                DiscoveryEndpoint = request.RequestUri.AbsoluteUri;
+
+                var data = new Dictionary<string, object>
+                {
+                    { "issuer", "https://authority.com" },
+                    { "introspection_endpoint", "https://authority.com/introspection_endpoint" }
+                };
+
+                var json = SimpleJson.SimpleJson.SerializeObject(data);
+
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+                response.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                return Task.FromResult(response);
+            }
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+        }
+
+        protected Task<HttpResponseMessage> SendIntrospectionAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            IntrospectionEndpoint = request.RequestUri.AbsoluteUri;
 
             if (_behavior == Behavior.Unauthorized)
             {
