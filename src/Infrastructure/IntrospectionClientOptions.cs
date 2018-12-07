@@ -1,6 +1,6 @@
 ﻿namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
 {
-    public class IntrospectionClientOptions
+    internal class IntrospectionClientOptions
     {
         public string Address { get; internal set; }
         public string ClientId { get; internal set; }

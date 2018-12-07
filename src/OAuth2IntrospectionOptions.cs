@@ -38,7 +38,7 @@ namespace Microsoft.AspNetCore.Builder
         public string IntrospectionEndpoint { get; set; }
 
         /// <summary>
-        /// Specifies the id of the introspection client.
+        /// Specifies the id of the introspection client (required).
         /// </summary>
         public string ClientId { get; set; }
 
@@ -75,38 +75,28 @@ namespace Microsoft.AspNetCore.Builder
         public DiscoveryPolicy DiscoveryPolicy { get; set; } = new DiscoveryPolicy();
 
         /// <summary>
-        /// Gets or sets the basic authentication header style (RFC6749 vs RFC2617). Defaults to RFC6749.
+        /// Gets or sets the backchannel HTTP client.
         /// </summary>
         /// <value>
-        /// The basic authentication header style.
+        /// The backchannel.
         /// </value>
-        public BasicAuthenticationHeaderStyle BasicAuthenticationHeaderStyle { get; set; } = BasicAuthenticationHeaderStyle.Rfc6749;
-
-        // TODO
         public HttpClient Backchannel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the backchannel HTTP handler.
+        /// </summary>
+        /// <value>
+        /// The backchannel HTTP handler.
+        /// </value>
         public HttpMessageHandler BackchannelHttpHandler { get; set; }
+
+        /// <summary>
+        /// Gets or sets the backchannel timeout.
+        /// </summary>
+        /// <value>
+        /// The backchannel timeout.
+        /// </value>
         public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(60);
-
-        
-        /// <summary>
-        /// Specifies the timout for contacting the discovery endpoint
-        /// </summary>
-        //public TimeSpan DiscoveryTimeout { get; set; } = TimeSpan.FromSeconds(60);
-
-        /// <summary>
-        /// Specifies the HTTP handler for the discovery endpoint
-        /// </summary>
-        //public HttpMessageHandler DiscoveryHttpHandler { get; set; }
-
-        /// <summary>
-        /// Specifies the timeout for contacting the introspection endpoint
-        /// </summary>
-        //public TimeSpan IntrospectionTimeout { get; set; } = TimeSpan.FromSeconds(60);
-
-        /// <summary>
-        /// Specifies the HTTP handler for the introspection endpoint
-        /// </summary>
-        //public HttpMessageHandler IntrospectionHttpHandler { get; set; }
 
         /// <summary>
         /// Specifies whether tokens that contain dots (most likely a JWT) are skipped
@@ -167,11 +157,6 @@ namespace Microsoft.AspNetCore.Builder
             {
                 throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
             }
-
-            //if (ClientId.IsMissing() && IntrospectionHttpHandler == null)
-            //{
-            //    throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
-            //}
 
             if (TokenRetriever == null)
             {

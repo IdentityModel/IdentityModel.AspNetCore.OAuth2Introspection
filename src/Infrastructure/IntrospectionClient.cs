@@ -22,6 +22,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
                 Address = _options.Address,
                 ClientId = _options.ClientId,
                 ClientSecret = _options.ClientSecret,
+                ClientCredentialStyle = ClientCredentialStyle.PostBody,
 
                 Token = token,
                 TokenTypeHint = tokenTypeHint
