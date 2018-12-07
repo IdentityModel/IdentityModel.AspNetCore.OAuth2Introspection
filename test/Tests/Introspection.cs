@@ -106,7 +106,9 @@ namespace Tests
                 _options(o);
                 o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
 
-            }); client.SetBearerToken("sometoken");
+            });
+
+            client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -161,6 +163,70 @@ namespace Tests
             var responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseDataStr);
 
             responseData.Should().Contain("token", expectedToken);
+        }
+
+        [Fact]
+        public async Task Repeated_active_token_with_caching_enabled_should_hit_cache()
+        {
+            var expectedToken = "expected_token";
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.BackchannelHttpHandler = handler;
+                o.SaveToken = true;
+                o.EnableCaching = true;
+                o.CacheDuration = TimeSpan.FromMinutes(10);
+            }, true);
+
+            client.SetBearerToken(expectedToken);
+
+            var firstResponse = await client.GetAsync("http://test");
+
+            firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            handler.SentIntrospectionRequest.Should().BeTrue();
+
+            var responseDataStr = await firstResponse.Content.ReadAsStringAsync();
+            var responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseDataStr);
+            responseData.Should().Contain("token", expectedToken);
+
+            handler.SentIntrospectionRequest = false;
+            var secondResponse = await client.GetAsync("http://test");
+            secondResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            handler.SentIntrospectionRequest.Should().BeFalse();
+
+            responseDataStr = await secondResponse.Content.ReadAsStringAsync();
+            responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseDataStr);
+            responseData.Should().Contain("token", expectedToken);
+        }
+
+        [Fact]
+        public async Task Repeated_inactive_token_with_caching_enabled_should_hit_cache()
+        {
+            var expectedToken = "expected_token";
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
+
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.BackchannelHttpHandler = handler;
+                o.SaveToken = true;
+                o.EnableCaching = true;
+                o.CacheDuration = TimeSpan.FromMinutes(10);
+            }, true);
+
+            client.SetBearerToken(expectedToken);
+
+            var firstResponse = await client.GetAsync("http://test");
+
+            firstResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            handler.SentIntrospectionRequest.Should().BeTrue();
+
+            handler.SentIntrospectionRequest = false;
+            var secondResponse = await client.GetAsync("http://test");
+            secondResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            handler.SentIntrospectionRequest.Should().BeFalse();
         }
 
         [Fact]

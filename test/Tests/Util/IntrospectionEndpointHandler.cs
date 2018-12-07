@@ -23,6 +23,8 @@ namespace Tests.Util
             Unauthorized
         }
 
+        public bool SentIntrospectionRequest { get; set; } = false;
+
         public Dictionary<string, object> AdditionalValues { get; set; } = new Dictionary<string, object>();
         public string IntrospectionEndpoint { get; set; }
         public string DiscoveryEndpoint { get; set; }
@@ -80,6 +82,7 @@ namespace Tests.Util
 
         protected Task<HttpResponseMessage> SendIntrospectionAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            SentIntrospectionRequest = true;
             IntrospectionEndpoint = request.RequestUri.AbsoluteUri;
 
             if (_behavior == Behavior.Unauthorized)
