@@ -108,7 +108,6 @@ namespace Tests
         [Fact]
         public async Task Authority_Get_Introspection_Endpoint()
         {
-            var handler = new DiscoveryEndpointHandler();
             OAuth2IntrospectionOptions ops = null;
 
             var client = PipelineFactory.CreateClient(options =>
