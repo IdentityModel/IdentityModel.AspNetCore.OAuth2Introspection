@@ -71,8 +71,10 @@ namespace Tests.Util
 
                 var json = SimpleJson.SimpleJson.SerializeObject(data);
 
-                var response = new HttpResponseMessage(HttpStatusCode.OK);
-                response.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, Encoding.UTF8, "application/json")
+                };
 
                 return Task.FromResult(response);
             }
@@ -104,8 +106,10 @@ namespace Tests.Util
 
                 var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
 
-                var response = new HttpResponseMessage(HttpStatusCode.OK);
-                response.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, Encoding.UTF8, "application/json")
+                };
 
                 return Task.FromResult(response);
             }
@@ -118,8 +122,10 @@ namespace Tests.Util
 
                 var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
 
-                var response = new HttpResponseMessage(HttpStatusCode.OK);
-                response.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, Encoding.UTF8, "application/json")
+                };
 
                 return Task.FromResult(response);
             }

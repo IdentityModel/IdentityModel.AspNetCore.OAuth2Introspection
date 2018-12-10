@@ -7,7 +7,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 

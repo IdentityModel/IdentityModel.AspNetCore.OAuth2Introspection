@@ -3,7 +3,6 @@
 
 using FluentAssertions;
 using Newtonsoft.Json;
-using Microsoft.AspNetCore.Builder;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -11,12 +10,13 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;
+using IdentityModel.AspNetCore.OAuth2Introspection;
 
 namespace Tests
 {
     public class Introspection
     {
-        Action<OAuth2IntrospectionOptions> _options = (o) =>
+        readonly Action<OAuth2IntrospectionOptions> _options = (o) =>
         {
             o.Authority = "https://authority.com";
             o.DiscoveryPolicy.RequireKeySet = false;
@@ -187,18 +187,9 @@ namespace Tests
             firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             handler.SentIntrospectionRequest.Should().BeTrue();
 
-            var responseDataStr = await firstResponse.Content.ReadAsStringAsync();
-            var responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseDataStr);
-            responseData.Should().Contain("token", expectedToken);
-
             handler.SentIntrospectionRequest = false;
             var secondResponse = await client.GetAsync("http://test");
-            secondResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             handler.SentIntrospectionRequest.Should().BeFalse();
-
-            responseDataStr = await secondResponse.Content.ReadAsStringAsync();
-            responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseDataStr);
-            responseData.Should().Contain("token", expectedToken);
         }
 
         [Fact]
@@ -244,7 +235,7 @@ namespace Tests
 
             handler.IsDiscoveryFailureTest = true;
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await client.GetAsync("http://test"));
-            
+
             handler.IsDiscoveryFailureTest = false;
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.OK);

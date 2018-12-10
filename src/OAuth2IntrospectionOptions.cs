@@ -1,17 +1,15 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System;
-using System.Net.Http;
-using Microsoft.AspNetCore.Http;
-using IdentityModel.AspNetCore.OAuth2Introspection;
-using Microsoft.AspNetCore.Authentication;
-using IdentityModel.Client;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
+using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Concurrent;
-using IdentityModel;
+using System.Net.Http;
 
-namespace Microsoft.AspNetCore.Builder
+namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     /// <summary>
     /// Options class for the OAuth 2.0 introspection endpoint authentication handler
@@ -104,7 +102,7 @@ namespace Microsoft.AspNetCore.Builder
         public bool SkipTokensWithDots { get; set; } = true;
 
         /// <summary>
-        /// Specifies whether the token should be stored
+        /// Specifies whether the token should be stored in the context, and thus be available for the duration of the request
         /// </summary>
         public bool SaveToken { get; set; } = true;
 
