@@ -168,12 +168,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return result;
         }
 
-        private AsyncLazy<IntrospectionResponse> CreateLazyIntrospection(string token)
+        private AsyncLazy<TokenIntrospectionResponse> CreateLazyIntrospection(string token)
         {
-            return new AsyncLazy<IntrospectionResponse>(() => LoadClaimsForToken(token));
+            return new AsyncLazy<TokenIntrospectionResponse>(() => LoadClaimsForToken(token));
         }
 
-        private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
+        private async Task<TokenIntrospectionResponse> LoadClaimsForToken(string token)
         {
             var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
             return await introspectionClient.Introspect(token, Options.TokenTypeHint).ConfigureAwait(false);

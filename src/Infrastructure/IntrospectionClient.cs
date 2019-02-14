@@ -15,7 +15,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
             _options = options;
         }
 
-        public Task<IntrospectionResponse> Introspect(string token, string tokenTypeHint = null)
+        public Task<TokenIntrospectionResponse> Introspect(string token, string tokenTypeHint = null)
         {
             return _client.IntrospectTokenAsync(new TokenIntrospectionRequest
             {
