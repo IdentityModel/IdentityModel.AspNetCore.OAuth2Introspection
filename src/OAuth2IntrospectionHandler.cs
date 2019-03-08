@@ -146,7 +146,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                         // add an exp claim - otherwise caching will not work
                         var claimsWithExp = response.Claims.ToList();
-                        claimsWithExp.Add(new Claim("exp", DateTime.UtcNow.Add(Options.CacheDuration).ToEpochTime().ToString()));
+                        claimsWithExp.Add(new Claim("exp", DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
                         await _cache.SetClaimsAsync(key, claimsWithExp, Options.CacheDuration, _logger).ConfigureAwait(false);
                     }
 

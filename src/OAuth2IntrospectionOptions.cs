@@ -46,6 +46,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public string ClientSecret { get; set; }
 
         /// <summary>
+        /// Specifies how client id and secret are being sent
+        /// </summary>
+        public ClientCredentialStyle ClientCredentialStyle { get; set; } = ClientCredentialStyle.PostBody;
+
+        /// <summary>
         /// Specifies the token type hint of the introspection client.
         /// </summary>
         public string TokenTypeHint { get; set; } = OidcConstants.TokenTypes.AccessToken;
@@ -135,7 +140,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             set { base.Events = value; }
         }
 
-        internal AsyncLazy<IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure.IntrospectionClient> IntrospectionClient { get; set; }
+        internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
         internal ConcurrentDictionary<string, AsyncLazy<TokenIntrospectionResponse>> LazyIntrospections { get; set; }
 
         /// <summary>

@@ -36,7 +36,7 @@ namespace Tests.Util
 
             if (ttl.HasValue)
             {
-                AdditionalValues.Add("exp", DateTimeOffset.UtcNow.Add(ttl.Value).ToEpochTime());
+                AdditionalValues.Add("exp", DateTimeOffset.UtcNow.Add(ttl.Value).ToUnixTimeSeconds());
             }
         }
 
