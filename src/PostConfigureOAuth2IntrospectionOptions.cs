@@ -38,7 +38,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 options.Backchannel.MaxResponseContentBufferSize = 1024 * 1024 * 10; // 10 MB
             }
 
-            options.IntrospectionClient = new AsyncLazy<Infrastructure.IntrospectionClient>(() => InitializeIntrospectionClient(options));
+            options.IntrospectionClient = new AsyncLazy<IntrospectionClient>(() => InitializeIntrospectionClient(options));
             options.LazyIntrospections = new ConcurrentDictionary<string, AsyncLazy<TokenIntrospectionResponse>>();
         }
 
@@ -69,7 +69,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return disco.IntrospectionEndpoint;
         }
 
-        private async Task<Infrastructure.IntrospectionClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions options)
+        private async Task<IntrospectionClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions options)
         {
             string endpoint;
 
@@ -83,11 +83,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 options.IntrospectionEndpoint = endpoint;
             }
 
-            return new Infrastructure.IntrospectionClient(options.Backchannel, new IntrospectionClientOptions
+            return new IntrospectionClient(options.Backchannel, new IntrospectionClientOptions
             {
                 Address = endpoint,
                 ClientId = options.ClientId, 
-                ClientSecret = options.ClientSecret
+                ClientSecret = options.ClientSecret,
+                ClientCredentialStyle = options.ClientCredentialStyle
             });
         }
     }
