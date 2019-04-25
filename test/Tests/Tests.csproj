@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;net461</TargetFrameworks>
-    <AssemblyName>Tests</AssemblyName>
+  <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
+    <TargetFrameworks>netcoreapp2.1;netcoreapp2.2</TargetFrameworks>
   </PropertyGroup>
-
+  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
+    <TargetFrameworks>netcoreapp2.1;netcoreapp2.2;net461</TargetFrameworks>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\IdentityModel.AspNetCore.OAuth2Introspection.csproj" />
