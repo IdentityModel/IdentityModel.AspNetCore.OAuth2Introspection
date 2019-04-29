@@ -1,17 +1,15 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System;
-using System.Net.Http;
-using Microsoft.AspNetCore.Http;
-using IdentityModel.AspNetCore.OAuth2Introspection;
-using Microsoft.AspNetCore.Authentication;
-using IdentityModel.Client;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
+using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Concurrent;
-using IdentityModel;
+using System.Net.Http;
 
-namespace Microsoft.AspNetCore.Builder
+namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     /// <summary>
     /// Options class for the OAuth 2.0 introspection endpoint authentication handler
@@ -38,7 +36,7 @@ namespace Microsoft.AspNetCore.Builder
         public string IntrospectionEndpoint { get; set; }
 
         /// <summary>
-        /// Specifies the id of the introspection client.
+        /// Specifies the id of the introspection client (required).
         /// </summary>
         public string ClientId { get; set; }
 
@@ -46,6 +44,11 @@ namespace Microsoft.AspNetCore.Builder
         /// Specifies the shared secret of the introspection client.
         /// </summary>
         public string ClientSecret { get; set; }
+
+        /// <summary>
+        /// Specifies how client id and secret are being sent
+        /// </summary>
+        public ClientCredentialStyle ClientCredentialStyle { get; set; } = ClientCredentialStyle.PostBody;
 
         /// <summary>
         /// Specifies the token type hint of the introspection client.
@@ -75,32 +78,28 @@ namespace Microsoft.AspNetCore.Builder
         public DiscoveryPolicy DiscoveryPolicy { get; set; } = new DiscoveryPolicy();
 
         /// <summary>
-        /// Gets or sets the basic authentication header style (RFC6749 vs RFC2617). Defaults to RFC6749.
+        /// Gets or sets the backchannel HTTP client.
         /// </summary>
         /// <value>
-        /// The basic authentication header style.
+        /// The backchannel.
         /// </value>
-        public BasicAuthenticationHeaderStyle BasicAuthenticationHeaderStyle { get; set; } = BasicAuthenticationHeaderStyle.Rfc6749;
+        public HttpClient Backchannel { get; set; }
 
         /// <summary>
-        /// Specifies the timout for contacting the discovery endpoint
+        /// Gets or sets the backchannel HTTP handler.
         /// </summary>
-        public TimeSpan DiscoveryTimeout { get; set; } = TimeSpan.FromSeconds(60);
+        /// <value>
+        /// The backchannel HTTP handler.
+        /// </value>
+        public HttpMessageHandler BackchannelHttpHandler { get; set; }
 
         /// <summary>
-        /// Specifies the HTTP handler for the discovery endpoint
+        /// Gets or sets the backchannel timeout.
         /// </summary>
-        public HttpMessageHandler DiscoveryHttpHandler { get; set; }
-
-        /// <summary>
-        /// Specifies the timeout for contacting the introspection endpoint
-        /// </summary>
-        public TimeSpan IntrospectionTimeout { get; set; } = TimeSpan.FromSeconds(60);
-
-        /// <summary>
-        /// Specifies the HTTP handler for the introspection endpoint
-        /// </summary>
-        public HttpMessageHandler IntrospectionHttpHandler { get; set; }
+        /// <value>
+        /// The backchannel timeout.
+        /// </value>
+        public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(60);
 
         /// <summary>
         /// Specifies whether tokens that contain dots (most likely a JWT) are skipped
@@ -108,7 +107,7 @@ namespace Microsoft.AspNetCore.Builder
         public bool SkipTokensWithDots { get; set; } = true;
 
         /// <summary>
-        /// Specifies whether the token should be stored
+        /// Specifies whether the token should be stored in the context, and thus be available for the duration of the request
         /// </summary>
         public bool SaveToken { get; set; } = true;
 
@@ -142,7 +141,7 @@ namespace Microsoft.AspNetCore.Builder
         }
 
         internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
-        internal ConcurrentDictionary<string, AsyncLazy<IntrospectionResponse>> LazyIntrospections { get; set; }
+        internal ConcurrentDictionary<string, AsyncLazy<TokenIntrospectionResponse>> LazyIntrospections { get; set; }
 
         /// <summary>
         /// Check that the options are valid. Should throw an exception if things are not ok.
@@ -160,11 +159,6 @@ namespace Microsoft.AspNetCore.Builder
             if (Authority.IsMissing() && IntrospectionEndpoint.IsMissing())
             {
                 throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
-            }
-
-            if (ClientId.IsMissing() && IntrospectionHttpHandler == null)
-            {
-                throw new InvalidOperationException("You must either set a ClientId or set an introspection HTTP handler");
             }
 
             if (TokenRetriever == null)

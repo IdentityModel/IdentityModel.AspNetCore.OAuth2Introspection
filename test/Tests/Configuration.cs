@@ -3,7 +3,8 @@
 
 
 using FluentAssertions;
-using Microsoft.AspNetCore.Builder;
+using IdentityModel.AspNetCore.OAuth2Introspection;
+using IdentityModel.Client;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -22,18 +23,6 @@ namespace Tests
 
             act.Should().Throw<InvalidOperationException>()
                 .WithMessage("You must either set Authority or IntrospectionEndpoint");
-        }
-
-        [Fact]
-        public void Authority_No_Scope_Details()
-        {
-            Action act = () => PipelineFactory.CreateClient((options) =>
-            {
-                options.Authority = "http://foo";
-            }).GetAsync("http://test").GetAwaiter().GetResult();
-
-            act.Should().Throw<InvalidOperationException>()
-                .WithMessage("You must either set a ClientId or set an introspection HTTP handler");
         }
 
         [Fact]
@@ -98,7 +87,7 @@ namespace Tests
             Action act = () => PipelineFactory.CreateClient(options =>
             {
                 options.IntrospectionEndpoint = "http://endpoint";
-                options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                options.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
             }).GetAsync("http://test").GetAwaiter().GetResult();
 
@@ -120,18 +109,16 @@ namespace Tests
         [Fact]
         public async Task Authority_Get_Introspection_Endpoint()
         {
-            var handler = new DiscoveryEndpointHandler();
             OAuth2IntrospectionOptions ops = null;
 
             var client = PipelineFactory.CreateClient(options =>
             {
                 options.Authority = "https://authority.com/";
                 options.ClientId = "scope";
-
-                options.DiscoveryHttpHandler = handler;
+                
                 options.DiscoveryPolicy.RequireKeySet = false;
 
-                options.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                options.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
                 ops = options;
             });

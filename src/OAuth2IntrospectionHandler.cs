@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -9,7 +10,6 @@ using System.Threading.Tasks;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -80,6 +80,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 var claims = await _cache.GetClaimsAsync(key).ConfigureAwait(false);
                 if (claims != null)
                 {
+                    // find out if it is a cached inactive token
+                    var isInActive = claims.FirstOrDefault(c => string.Equals(c.Type, "active", StringComparison.OrdinalIgnoreCase) && string.Equals(c.Value, "false", StringComparison.OrdinalIgnoreCase));
+                    if (isInActive != null)
+                    {
+                        return ReportNonSuccessAndReturn(AuthenticateResult.Fail("Cached token is not active."));
+                    }
+
                     var ticket = await CreateTicket(claims);
 
                     _logger.LogTrace("Token found in cache.");
@@ -110,7 +117,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                     _logger.LogError("Error returned from introspection endpoint: " + response.Error);
                     return ReportNonSuccessAndReturn(AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error));
                 }
-
+                
                 if (response.IsActive)
                 {
                     var ticket = await CreateTicket(response.Claims);
@@ -133,6 +140,16 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 }
                 else
                 {
+                    if (Options.EnableCaching)
+                    {
+                        var key = $"{Options.CacheKeyPrefix}{token}";
+
+                        // add an exp claim - otherwise caching will not work
+                        var claimsWithExp = response.Claims.ToList();
+                        claimsWithExp.Add(new Claim("exp", DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
+                        await _cache.SetClaimsAsync(key, claimsWithExp, Options.CacheDuration, _logger).ConfigureAwait(false);
+                    }
+
                     return ReportNonSuccessAndReturn(AuthenticateResult.Fail("Token is not active."));
                 }
             }
@@ -151,22 +168,15 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return result;
         }
 
-        private AsyncLazy<IntrospectionResponse> CreateLazyIntrospection(string token)
+        private AsyncLazy<TokenIntrospectionResponse> CreateLazyIntrospection(string token)
         {
-            return new AsyncLazy<IntrospectionResponse>(() => LoadClaimsForToken(token));
+            return new AsyncLazy<TokenIntrospectionResponse>(() => LoadClaimsForToken(token));
         }
 
-        private async Task<IntrospectionResponse> LoadClaimsForToken(string token)
+        private async Task<TokenIntrospectionResponse> LoadClaimsForToken(string token)
         {
             var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
-
-            return await introspectionClient.SendAsync(new IntrospectionRequest
-            {
-                Token = token,
-                TokenTypeHint = Options.TokenTypeHint,
-                ClientId = Options.ClientId,
-                ClientSecret = Options.ClientSecret
-            }).ConfigureAwait(false);
+            return await introspectionClient.Introspect(token, Options.TokenTypeHint).ConfigureAwait(false);
         }
 
         private async Task<AuthenticationTicket> CreateTicket(IEnumerable<Claim> claims)

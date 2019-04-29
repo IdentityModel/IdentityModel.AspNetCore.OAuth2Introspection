@@ -3,7 +3,6 @@
 
 using FluentAssertions;
 using Newtonsoft.Json;
-using Microsoft.AspNetCore.Builder;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -11,16 +10,16 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;
+using IdentityModel.AspNetCore.OAuth2Introspection;
+using IdentityModel.Client;
 
 namespace Tests
 {
     public class Introspection
     {
-        Action<OAuth2IntrospectionOptions> _options = (o) =>
+        readonly Action<OAuth2IntrospectionOptions> _options = (o) =>
         {
             o.Authority = "https://authority.com";
-            o.DiscoveryHttpHandler = new DiscoveryEndpointHandler();
-
             o.DiscoveryPolicy.RequireKeySet = false;
 
             o.ClientId = "scope";
@@ -33,7 +32,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
             });
 
             client.SetBearerToken("sometoken");
@@ -48,7 +47,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
             });
 
             client.SetBearerToken("sometoken");
@@ -64,7 +63,7 @@ namespace Tests
             {
                 _options(o);
 
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
 
@@ -86,7 +85,7 @@ namespace Tests
             {
                 _options(o);
 
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
             }, true);
@@ -106,9 +105,11 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
 
-            }); client.SetBearerToken("sometoken");
+            });
+
+            client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -122,7 +123,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
                 o.SaveToken = true;
             });
 
@@ -145,7 +146,7 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
                 o.SaveToken = true;
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
@@ -166,23 +167,77 @@ namespace Tests
         }
 
         [Fact]
-        public async Task ActiveToken_With_Discovery_Unavailable_On_First_Request()
+        public async Task Repeated_active_token_with_caching_enabled_should_hit_cache()
         {
-            var handler = new DiscoveryEndpointHandler();
+            var expectedToken = "expected_token";
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
 
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.DiscoveryHttpHandler = handler;
-                o.IntrospectionHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+                o.BackchannelHttpHandler = handler;
+                o.SaveToken = true;
+                o.EnableCaching = true;
+                o.CacheDuration = TimeSpan.FromMinutes(10);
+            }, true);
+
+            client.SetBearerToken(expectedToken);
+
+            var firstResponse = await client.GetAsync("http://test");
+
+            firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            handler.SentIntrospectionRequest.Should().BeTrue();
+
+            handler.SentIntrospectionRequest = false;
+            var secondResponse = await client.GetAsync("http://test");
+            handler.SentIntrospectionRequest.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task Repeated_inactive_token_with_caching_enabled_should_hit_cache()
+        {
+            var expectedToken = "expected_token";
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
+
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.BackchannelHttpHandler = handler;
+                o.SaveToken = true;
+                o.EnableCaching = true;
+                o.CacheDuration = TimeSpan.FromMinutes(10);
+            }, true);
+
+            client.SetBearerToken(expectedToken);
+
+            var firstResponse = await client.GetAsync("http://test");
+
+            firstResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            handler.SentIntrospectionRequest.Should().BeTrue();
+
+            handler.SentIntrospectionRequest = false;
+            var secondResponse = await client.GetAsync("http://test");
+            secondResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            handler.SentIntrospectionRequest.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task ActiveToken_With_Discovery_Unavailable_On_First_Request()
+        {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.BackchannelHttpHandler = handler;
             });
 
             client.SetBearerToken("sometoken");
 
-            handler.IsFailureTest = true;
+            handler.IsDiscoveryFailureTest = true;
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await client.GetAsync("http://test"));
-            
-            handler.IsFailureTest = false;
+
+            handler.IsDiscoveryFailureTest = false;
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.OK);
         }
