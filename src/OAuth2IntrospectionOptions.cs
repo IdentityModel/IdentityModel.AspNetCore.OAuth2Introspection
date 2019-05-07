@@ -23,6 +23,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         {
             Events = new OAuth2IntrospectionEvents();
         }
+
         /// <summary>
         /// Sets the base-path of the token provider.
         /// If set, the OpenID Connect discovery document will be used to find the introspection endpoint.
