@@ -50,6 +50,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static AuthenticationBuilder AddOAuth2Introspection(this AuthenticationBuilder builder, string authenticationScheme, Action<OAuth2IntrospectionOptions> configureOptions)
         {
+            builder.Services.AddHttpClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
+            
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IPostConfigureOptions<OAuth2IntrospectionOptions>, PostConfigureOAuth2IntrospectionOptions>());
             return builder.AddScheme<OAuth2IntrospectionOptions, OAuth2IntrospectionHandler>(authenticationScheme, configureOptions);
         }

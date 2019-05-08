@@ -15,10 +15,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     internal class PostConfigureOAuth2IntrospectionOptions : IPostConfigureOptions<OAuth2IntrospectionOptions>
     {
         private readonly IDistributedCache _cache;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public PostConfigureOAuth2IntrospectionOptions(IDistributedCache cache = null)
+        public PostConfigureOAuth2IntrospectionOptions(IHttpClientFactory httpClientFactory, IDistributedCache cache = null)
         {
             _cache = cache;
+            _httpClientFactory = httpClientFactory;
         }
 
         public void PostConfigure(string name, OAuth2IntrospectionOptions options)
@@ -30,21 +32,15 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 throw new ArgumentException("Caching is enabled, but no IDistributedCache is found in the services collection", nameof(_cache));
             }
             
-            if (options.Backchannel == null)
-            {
-                options.Backchannel = new HttpClient(options.BackchannelHttpHandler ?? new HttpClientHandler());
-                options.Backchannel.DefaultRequestHeaders.UserAgent.ParseAdd("IdentityModel.AspNetCore.OAuth2Introspection");
-                options.Backchannel.Timeout = options.BackchannelTimeout;
-                options.Backchannel.MaxResponseContentBufferSize = 1024 * 1024 * 10; // 10 MB
-            }
-
             options.IntrospectionClient = new AsyncLazy<IntrospectionClient>(() => InitializeIntrospectionClient(options));
             options.LazyIntrospections = new ConcurrentDictionary<string, AsyncLazy<TokenIntrospectionResponse>>();
         }
 
         private async Task<string> GetIntrospectionEndpointFromDiscoveryDocument(OAuth2IntrospectionOptions options)
         {
-            var disco = await options.Backchannel.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+            var client = _httpClientFactory.CreateClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
+
+            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
             {
                 Address = options.Authority,
                 Policy = options?.DiscoveryPolicy ?? new DiscoveryPolicy()
@@ -83,7 +79,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 options.IntrospectionEndpoint = endpoint;
             }
 
-            return new IntrospectionClient(options.Backchannel, new IntrospectionClientOptions
+            Func<HttpMessageInvoker> clientFunc = () => _httpClientFactory.CreateClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
+
+            return new IntrospectionClient(clientFunc, new IntrospectionClientOptions
             {
                 Address = endpoint,
                 ClientId = options.ClientId, 

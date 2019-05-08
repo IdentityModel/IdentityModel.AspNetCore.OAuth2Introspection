@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Tests.Util
 {
-    class IntrospectionEndpointHandler : HttpMessageHandler
+    class IntrospectionEndpointHandler : DelegatingHandler
     {
         private readonly Behavior _behavior;
 

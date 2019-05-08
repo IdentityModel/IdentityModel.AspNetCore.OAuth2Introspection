@@ -19,7 +19,7 @@ namespace Tests
         public void Empty_Options()
         {
             Action act = () => PipelineFactory.CreateClient((options) => { })
-            .GetAsync("http://test").GetAwaiter().GetResult();
+                .GetAsync("http://test").GetAwaiter().GetResult();
 
             act.Should().Throw<InvalidOperationException>()
                 .WithMessage("You must either set Authority or IntrospectionEndpoint");
@@ -84,12 +84,12 @@ namespace Tests
         [Fact]
         public void No_ClientName_But_Introspection_Handler()
         {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+
             Action act = () => PipelineFactory.CreateClient(options =>
             {
                 options.IntrospectionEndpoint = "http://endpoint";
-                options.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-
-            }).GetAsync("http://test").GetAwaiter().GetResult();
+            }, handler).GetAsync("http://test").GetAwaiter().GetResult();
 
             act.Should().NotThrow();
         }
@@ -110,18 +110,16 @@ namespace Tests
         public async Task Authority_Get_Introspection_Endpoint()
         {
             OAuth2IntrospectionOptions ops = null;
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
             var client = PipelineFactory.CreateClient(options =>
             {
                 options.Authority = "https://authority.com/";
                 options.ClientId = "scope";
-                
+
                 options.DiscoveryPolicy.RequireKeySet = false;
-
-                options.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-
                 ops = options;
-            });
+            }, handler);
 
             client.SetBearerToken("token");
             await client.GetAsync("http://server/api");

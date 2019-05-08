@@ -29,12 +29,9 @@ namespace Tests
         [Fact]
         public async Task Unauthorized_Client()
         {
-            var client = PipelineFactory.CreateClient((o) =>
-            {
-                _options(o);
-                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
-            });
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
 
+            var client = PipelineFactory.CreateClient((o) => _options(o), handler);
             client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
@@ -44,12 +41,9 @@ namespace Tests
         [Fact]
         public async Task ActiveToken()
         {
-            var client = PipelineFactory.CreateClient((o) =>
-            {
-                _options(o);
-                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-            });
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
+            var client = PipelineFactory.CreateClient((o) => _options(o), handler);
             client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
@@ -59,15 +53,15 @@ namespace Tests
         [Fact]
         public async Task ActiveToken_With_Caching_Ttl_Longer_Than_Duration()
         {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
 
-                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
 
-            }, true);
+            }, handler, true);
 
             client.SetBearerToken("sometoken");
 
@@ -81,14 +75,15 @@ namespace Tests
         [Fact]
         public async Task ActiveToken_With_Caching_Ttl_Shorter_Than_Duration()
         {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
+
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
 
-                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
-            }, true);
+            }, handler, true);
 
             client.SetBearerToken("sometoken");
 
@@ -102,13 +97,9 @@ namespace Tests
         [Fact]
         public async Task InactiveToken()
         {
-            var client = PipelineFactory.CreateClient((o) =>
-            {
-                _options(o);
-                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
 
-            });
-
+            var client = PipelineFactory.CreateClient((o) => _options(o), handler);
             client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
@@ -119,13 +110,14 @@ namespace Tests
         public async Task ActiveToken_With_SavedToken()
         {
             var expectedToken = "expected_token";
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+
                 o.SaveToken = true;
-            });
+            }, handler);
 
             client.SetBearerToken(expectedToken);
 
@@ -142,15 +134,16 @@ namespace Tests
         public async Task ActiveToken_With_SavedToken_And_Caching()
         {
             var expectedToken = "expected_token";
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
 
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.BackchannelHttpHandler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+
                 o.SaveToken = true;
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
-            }, true);
+            }, handler, true);
 
             client.SetBearerToken(expectedToken);
 
@@ -175,11 +168,11 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.BackchannelHttpHandler = handler;
+                
                 o.SaveToken = true;
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
-            }, true);
+            }, handler, true);
 
             client.SetBearerToken(expectedToken);
 
@@ -202,11 +195,11 @@ namespace Tests
             var client = PipelineFactory.CreateClient((o) =>
             {
                 _options(o);
-                o.BackchannelHttpHandler = handler;
+
                 o.SaveToken = true;
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
-            }, true);
+            }, handler, true);
 
             client.SetBearerToken(expectedToken);
 
@@ -226,12 +219,7 @@ namespace Tests
         {
             var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
-            var client = PipelineFactory.CreateClient((o) =>
-            {
-                _options(o);
-                o.BackchannelHttpHandler = handler;
-            });
-
+            var client = PipelineFactory.CreateClient((o) => _options(o), handler);
             client.SetBearerToken("sometoken");
 
             handler.IsDiscoveryFailureTest = true;

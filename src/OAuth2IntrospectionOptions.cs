@@ -89,30 +89,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public DiscoveryPolicy DiscoveryPolicy { get; set; } = new DiscoveryPolicy();
 
         /// <summary>
-        /// Gets or sets the backchannel HTTP client.
-        /// </summary>
-        /// <value>
-        /// The backchannel.
-        /// </value>
-        public HttpClient Backchannel { get; set; }
-
-        /// <summary>
-        /// Gets or sets the backchannel HTTP handler.
-        /// </summary>
-        /// <value>
-        /// The backchannel HTTP handler.
-        /// </value>
-        public HttpMessageHandler BackchannelHttpHandler { get; set; }
-
-        /// <summary>
-        /// Gets or sets the backchannel timeout.
-        /// </summary>
-        /// <value>
-        /// The backchannel timeout.
-        /// </value>
-        public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(60);
-
-        /// <summary>
         /// Specifies whether tokens that contain dots (most likely a JWT) are skipped
         /// </summary>
         public bool SkipTokensWithDots { get; set; } = true;
