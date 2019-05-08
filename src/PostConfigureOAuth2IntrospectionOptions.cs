@@ -36,6 +36,33 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             options.LazyIntrospections = new ConcurrentDictionary<string, AsyncLazy<TokenIntrospectionResponse>>();
         }
 
+        private async Task<IntrospectionClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions options)
+        {
+            string endpoint;
+
+            if (options.IntrospectionEndpoint.IsPresent())
+            {
+                endpoint = options.IntrospectionEndpoint;
+            }
+            else
+            {
+                endpoint = await GetIntrospectionEndpointFromDiscoveryDocument(options).ConfigureAwait(false);
+                options.IntrospectionEndpoint = endpoint;
+            }
+
+            HttpMessageInvoker clientFunc() => _httpClientFactory.CreateClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
+
+            return new IntrospectionClient(clientFunc, new IntrospectionClientOptions
+            {
+                Address = endpoint,
+                ClientId = options.ClientId,
+                ClientSecret = options.ClientSecret,
+                ClientAssertion = options.ClientAssertion ?? new ClientAssertion(),
+                ClientCredentialStyle = options.ClientCredentialStyle,
+                AuthorizationHeaderStyle = options.AuthorizationHeaderStyle
+            });
+        }
+
         private async Task<string> GetIntrospectionEndpointFromDiscoveryDocument(OAuth2IntrospectionOptions options)
         {
             var client = _httpClientFactory.CreateClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
@@ -63,33 +90,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             return disco.IntrospectionEndpoint;
-        }
-
-        private async Task<IntrospectionClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions options)
-        {
-            string endpoint;
-
-            if (options.IntrospectionEndpoint.IsPresent())
-            {
-                endpoint = options.IntrospectionEndpoint;
-            }
-            else
-            {
-                endpoint = await GetIntrospectionEndpointFromDiscoveryDocument(options).ConfigureAwait(false);
-                options.IntrospectionEndpoint = endpoint;
-            }
-
-            Func<HttpMessageInvoker> clientFunc = () => _httpClientFactory.CreateClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
-
-            return new IntrospectionClient(clientFunc, new IntrospectionClientOptions
-            {
-                Address = endpoint,
-                ClientId = options.ClientId, 
-                ClientSecret = options.ClientSecret,
-                ClientAssertion = options.ClientAssertion ?? new ClientAssertion(),
-                ClientCredentialStyle = options.ClientCredentialStyle,
-                AuthorizationHeaderStyle = options.AuthorizationHeaderStyle
-            });
         }
     }
 }
