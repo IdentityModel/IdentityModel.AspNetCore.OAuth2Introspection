@@ -88,7 +88,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 Address = endpoint,
                 ClientId = options.ClientId, 
                 ClientSecret = options.ClientSecret,
-                ClientCredentialStyle = options.ClientCredentialStyle
+                ClientAssertion = options.ClientAssertion ?? new ClientAssertion(),
+                ClientCredentialStyle = options.ClientCredentialStyle,
+                AuthorizationHeaderStyle = options.AuthorizationHeaderStyle
             });
         }
     }

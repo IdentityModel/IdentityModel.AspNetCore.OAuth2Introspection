@@ -47,9 +47,19 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public string ClientSecret { get; set; }
 
         /// <summary>
+        /// Specifies the the client assertion to be used (optional replacement of simple client secret)
+        /// </summary>
+        public ClientAssertion ClientAssertion { get; set; } = new ClientAssertion();
+
+        /// <summary>
         /// Specifies how client id and secret are being sent
         /// </summary>
         public ClientCredentialStyle ClientCredentialStyle { get; set; } = ClientCredentialStyle.PostBody;
+
+        /// <summary>
+        /// Specifies how the authorization header gets formatted (if used)
+        /// </summary>
+        public BasicAuthenticationHeaderStyle AuthorizationHeaderStyle { get; set; } = BasicAuthenticationHeaderStyle.Rfc2617;
 
         /// <summary>
         /// Specifies the token type hint of the introspection client.
