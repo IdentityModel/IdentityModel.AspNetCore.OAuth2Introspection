@@ -18,7 +18,7 @@ namespace Tests.Util
 {
     class PipelineFactory
     {
-        public static TestServer CreateServer(Action<OAuth2IntrospectionOptions> options, bool addCaching = false)
+        public static TestServer CreateServer(Action<OAuth2IntrospectionOptions> options, DelegatingHandler backChannelHandler, bool addCaching = false)
         {
             return new TestServer(new WebHostBuilder()
                 .ConfigureServices(services =>
@@ -31,6 +31,12 @@ namespace Tests.Util
                     services
                         .AddAuthentication(OAuth2IntrospectionDefaults.AuthenticationScheme)
                         .AddOAuth2Introspection(options);
+
+                    if (backChannelHandler != null)
+                    {
+                        services.AddHttpClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName)
+                            .AddHttpMessageHandler(() => backChannelHandler);
+                    }
                 })
                 .Configure(app =>
                 {
@@ -60,14 +66,14 @@ namespace Tests.Util
                 }));
         }
 
-        public static HttpClient CreateClient(Action<OAuth2IntrospectionOptions> options, bool addCaching = false)
+        public static HttpClient CreateClient(Action<OAuth2IntrospectionOptions> options, DelegatingHandler handler = null, bool addCaching = false)
         {
-            return CreateServer(options, addCaching).CreateClient();
+            return CreateServer(options, handler, addCaching).CreateClient();
         }
 
-        public static HttpMessageHandler CreateHandler(Action<OAuth2IntrospectionOptions> options, bool addCaching = false)
+        public static HttpMessageHandler CreateHandler(Action<OAuth2IntrospectionOptions> options, DelegatingHandler handler = null, bool addCaching = false)
         {
-            return CreateServer(options, addCaching).CreateHandler();
+            return CreateServer(options, handler, addCaching).CreateHandler();
         }
     }
 }
