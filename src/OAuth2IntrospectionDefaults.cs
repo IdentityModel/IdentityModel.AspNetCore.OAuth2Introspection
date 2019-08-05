@@ -11,11 +11,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// <summary>
         /// The default authentication scheme.
         /// </summary>
-        public static string AuthenticationScheme => "Bearer";
+        public const string AuthenticationScheme = "Bearer";
 
         /// <summary>
         /// The name of the HttpClient that will be resolved from the HttpClientFactory
         /// </summary>
-        public static string BackChannelHttpClientName => "IdentityModel.AspNetCore.OAuth2Introspection.BackChannelHttpClientName";
+        public const string BackChannelHttpClientName = "IdentityModel.AspNetCore.OAuth2Introspection.BackChannelHttpClientName";
     }
 }

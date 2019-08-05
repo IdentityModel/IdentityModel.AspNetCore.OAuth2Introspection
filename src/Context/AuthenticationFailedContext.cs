@@ -1,19 +1,25 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
+    /// <summary>
+    /// Context for the AuthenticationFailed event
+    /// </summary>
     public class AuthenticationFailedContext : ResultContext<OAuth2IntrospectionOptions>
     {
+        /// <summary>
+        /// ctor
+        /// </summary>
         public AuthenticationFailedContext(
             HttpContext context,
             AuthenticationScheme scheme,
             OAuth2IntrospectionOptions options)
             : base(context, scheme, options) { }
 
+        /// <summary>
+        /// The error
+        /// </summary>
         public string Error { get; set; }
     }
 }
