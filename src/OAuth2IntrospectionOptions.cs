@@ -15,6 +15,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     /// </summary>
     public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     {
+        /// <summary>
+        /// ctor
+        /// </summary>
         public OAuth2IntrospectionOptions()
         {
             Events = new OAuth2IntrospectionEvents();
