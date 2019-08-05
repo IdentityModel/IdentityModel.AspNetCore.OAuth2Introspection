@@ -2,16 +2,15 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using FluentAssertions;
+using IdentityModel.AspNetCore.OAuth2Introspection;
+using IdentityModel.Client;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;
-using IdentityModel.AspNetCore.OAuth2Introspection;
-using IdentityModel.Client;
 
 namespace Tests
 {
@@ -48,6 +47,42 @@ namespace Tests
 
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+
+        [Fact]
+        public async Task Active_token_with_inline_event_events_should_be_called()
+        {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+            bool? validatedCalled = null;
+            bool? failureCalled = null;
+
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+
+                o.Events.OnTokenValidated = e =>
+                {
+                    validatedCalled = true;
+
+                    return Task.CompletedTask;
+                };
+
+                o.Events.OnAuthenticationFailed = e =>
+                {
+                    failureCalled = true;
+
+                    return Task.CompletedTask;
+                };
+
+            }, handler);
+
+            client.SetBearerToken("sometoken");
+
+            var result = await client.GetAsync("http://test");
+
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
+            validatedCalled.Should().BeTrue();
+            failureCalled.Should().BeNull();
         }
 
         [Fact]
@@ -104,6 +139,42 @@ namespace Tests
 
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        }
+
+        [Fact]
+        public async Task InActive_token_with_inline_event_events_should_be_called()
+        {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
+            bool? validatedCalled = null;
+            bool? failureCalled = null;
+
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+
+                o.Events.OnTokenValidated = e =>
+                {
+                    validatedCalled = true;
+
+                    return Task.CompletedTask;
+                };
+
+                o.Events.OnAuthenticationFailed = e =>
+                {
+                    failureCalled = true;
+
+                    return Task.CompletedTask;
+                };
+
+            }, handler);
+
+            client.SetBearerToken("sometoken");
+
+            var result = await client.GetAsync("http://test");
+
+            result.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            validatedCalled.Should().BeNull();
+            failureCalled.Should().BeTrue();
         }
 
         [Fact]

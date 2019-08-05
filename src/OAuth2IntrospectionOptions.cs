@@ -15,9 +15,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     /// </summary>
     public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     {
-        /// <summary>
-        /// Dafault options constructor
-        /// </summary>
         public OAuth2IntrospectionOptions()
         {
             Events = new OAuth2IntrospectionEvents();

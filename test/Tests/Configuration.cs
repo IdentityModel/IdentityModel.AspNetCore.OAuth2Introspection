@@ -6,7 +6,6 @@ using FluentAssertions;
 using IdentityModel.AspNetCore.OAuth2Introspection;
 using IdentityModel.Client;
 using System;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;

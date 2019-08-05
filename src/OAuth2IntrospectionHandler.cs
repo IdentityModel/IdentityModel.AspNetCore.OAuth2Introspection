@@ -55,6 +55,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             set { base.Events = value; }
         }
 
+        /// <inheritdoc/>
+        protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new OAuth2IntrospectionEvents());
+
         /// <summary>
         /// Tries to authenticate a reference token on the current request
         /// </summary>
@@ -65,13 +68,13 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             if (token.IsMissing())
             {
-                return ReportNonSuccessAndReturn(AuthenticateResult.NoResult());
+                return AuthenticateResult.NoResult();
             }
 
             if (token.Contains('.') && Options.SkipTokensWithDots)
             {
                 _logger.LogTrace("Token contains a dot - skipped because SkipTokensWithDots is set.");
-                return ReportNonSuccessAndReturn(AuthenticateResult.NoResult());
+                return AuthenticateResult.NoResult();
             }
 
             if (Options.EnableCaching)
@@ -84,22 +87,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                     var isInActive = claims.FirstOrDefault(c => string.Equals(c.Type, "active", StringComparison.OrdinalIgnoreCase) && string.Equals(c.Value, "false", StringComparison.OrdinalIgnoreCase));
                     if (isInActive != null)
                     {
-                        return ReportNonSuccessAndReturn(AuthenticateResult.Fail("Cached token is not active."));
+                        return await ReportNonSuccessAndReturn("Cached token is not active.");
                     }
 
-                    var ticket = await CreateTicket(claims);
-
-                    _logger.LogTrace("Token found in cache.");
-
-                    if (Options.SaveToken)
-                    {
-                        ticket.Properties.StoreTokens(new[]
-                        {
-                            new AuthenticationToken { Name = "access_token", Value = token }
-                        });
-                    }
-
-                    return AuthenticateResult.Success(ticket);
+                    return await CreateTicket(claims, token);
                 }
 
                 _logger.LogTrace("Token is not cached.");
@@ -115,28 +106,18 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 if (response.IsError)
                 {
                     _logger.LogError("Error returned from introspection endpoint: " + response.Error);
-                    return ReportNonSuccessAndReturn(AuthenticateResult.Fail("Error returned from introspection endpoint: " + response.Error));
+                    return await ReportNonSuccessAndReturn("Error returned from introspection endpoint: " + response.Error);
                 }
                 
                 if (response.IsActive)
                 {
-                    var ticket = await CreateTicket(response.Claims);
-
-                    if (Options.SaveToken)
-                    {
-                        ticket.Properties.StoreTokens(new[]
-                        {
-                            new AuthenticationToken {Name = "access_token", Value = token}
-                        });
-                    }
-
                     if (Options.EnableCaching)
                     {
                         var key = $"{Options.CacheKeyPrefix}{token}";
                         await _cache.SetClaimsAsync(key, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                     }
 
-                    return AuthenticateResult.Success(ticket);
+                    return await CreateTicket(response.Claims, token);
                 }
                 else
                 {
@@ -150,7 +131,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                         await _cache.SetClaimsAsync(key, claimsWithExp, Options.CacheDuration, _logger).ConfigureAwait(false);
                     }
 
-                    return ReportNonSuccessAndReturn(AuthenticateResult.Fail("Token is not active."));
+                    return await ReportNonSuccessAndReturn("Token is not active.");
                 }
             }
             finally
@@ -162,10 +143,21 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
         }
 
-        private AuthenticateResult ReportNonSuccessAndReturn(AuthenticateResult result)
+        private async Task<AuthenticateResult> ReportNonSuccessAndReturn(string error)
         {
-            Options.Events.OnAuthenticationFailed(result);
-            return result;
+            var authenticationFailedContext = new AuthenticationFailedContext(Context, Scheme, Options)
+            {
+                Error = error
+            };
+
+            await Events.AuthenticationFailed(authenticationFailedContext);
+
+            if (authenticationFailedContext.Result != null)
+            {
+                return authenticationFailedContext.Result;
+            }
+
+            return AuthenticateResult.Fail(error);
         }
 
         private AsyncLazy<TokenIntrospectionResponse> CreateLazyIntrospection(string token)
@@ -179,15 +171,34 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return await introspectionClient.Introspect(token, Options.TokenTypeHint).ConfigureAwait(false);
         }
 
-        private async Task<AuthenticationTicket> CreateTicket(IEnumerable<Claim> claims)
+        private async Task<AuthenticateResult> CreateTicket(IEnumerable<Claim> claims, string token)
         {
             var authenticationType = Options.AuthenticationType ?? Scheme.Name;
             var id = new ClaimsIdentity(claims, authenticationType, Options.NameClaimType, Options.RoleClaimType);
             var principal = new ClaimsPrincipal(id);
 
-            await Events.CreatingTicket(principal);
+            var tokenValidatedContext = new TokenValidatedContext(Context, Scheme, Options)
+            {
+                Principal = principal,
+                SecurityToken = token
+            };
 
-            return new AuthenticationTicket(principal, new AuthenticationProperties(), Scheme.Name);
+            await Events.TokenValidated(tokenValidatedContext);
+            if (tokenValidatedContext.Result != null)
+            {
+                return tokenValidatedContext.Result;
+            }
+
+            if (Options.SaveToken)
+            {
+                tokenValidatedContext.Properties.StoreTokens(new[]
+                {
+                    new AuthenticationToken { Name = "access_token", Value = token }
+                });
+            }
+
+            tokenValidatedContext.Success();
+            return tokenValidatedContext.Result;
         }
     }
 }
