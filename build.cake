@@ -216,11 +216,11 @@ private bool SkipPack()
         return true;
     }
     
-    if (String.IsNullOrEmpty(versions.PreReleaseLabel) && versions.BranchName != "master") 
-    {
-        Information("Skipping pack of release version, because not on master.");
-        return true;
-    }
+    // if (String.IsNullOrEmpty(versions.PreReleaseLabel) && versions.BranchName != "master") 
+    // {
+    //     Information("Skipping pack of release version, because not on master.");
+    //     return true;
+    // }
 
     if (versions.PreReleaseLabel == "PullRequest")
     {
