@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="IdentityModel" Version="4.0.0-preview.2.39" />
+    <PackageReference Include="IdentityModel" Version="4.0.0" />
 
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19367-01" PrivateAssets="All" />
     <PackageReference Include="minver" Version="1.1.0" PrivateAssets="All" />
