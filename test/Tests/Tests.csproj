@@ -15,6 +15,6 @@
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="FluentAssertions" Version="5.9.0" />
     
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.0.0-preview8.19405.7" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.0.0-preview9.19424.4" />
   </ItemGroup>
 </Project>
