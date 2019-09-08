@@ -90,7 +90,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// <summary>
         /// Specifies whether tokens that contain dots (most likely a JWT) are skipped
         /// </summary>
-        public bool SkipTokensWithDots { get; set; } = true;
+        public bool SkipTokensWithDots { get; set; } = false;
 
         /// <summary>
         /// Specifies whether the token should be stored in the context, and thus be available for the duration of the request
