@@ -6,7 +6,8 @@
     <Description>ASP.NET Core authentication handler for validating tokens using OAuth 2.0 introspection</Description>
     <Authors>Dominick Baier;Brock Allen</Authors>
     <PackageTags>OAuth2;OAuth 2.0;Introspection;Security;Identity;IdentityServer</PackageTags>
-    <PackageIconUrl>https://identityserver.github.io/Documentation/assets/images/icons/IDmodel_icon128.png</PackageIconUrl>
+    <PackageIcon>icon.jpg</PackageIcon>
+    <!-- <PackageIconUrl>https://identityserver.github.io/Documentation/assets/images/icons/IDmodel_icon128.png</PackageIconUrl> -->
     <PackageProjectUrl>https://github.com/IdentityModel/IdentityModel.AspNetCore.OAuth2Introspection</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -24,6 +25,10 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../icon.jpg" Pack="true" Visible="false" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
