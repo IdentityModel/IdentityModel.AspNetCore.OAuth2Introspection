@@ -70,17 +70,21 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         {
             string token = Options.TokenRetriever(Context.Request);
 
+            // no token - nothing to do here
             if (token.IsMissing())
             {
                 return AuthenticateResult.NoResult();
             }
 
+            // if token contains a dot - it might be a JWT and we are skipping
+            // this is configurable
             if (token.Contains('.') && Options.SkipTokensWithDots)
             {
                 _logger.LogTrace("Token contains a dot - skipped because SkipTokensWithDots is set.");
                 return AuthenticateResult.NoResult();
             }
 
+            // if caching is enable - let's check if we have a cached introspection
             if (Options.EnableCaching)
             {
                 var key = $"{Options.CacheKeyPrefix}{token}";
@@ -100,6 +104,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 _logger.LogTrace("Token is not cached.");
             }
             
+            // no cached result - let's make a network roundtrip to the introspection endpoint
+            // this code block tries to make sure that we only do a single roundtrip, even when multiple requests
+            // with the same token come in at the same time
             try
             {
                 return await IntrospectionDictionary.GetOrAdd(token, _ =>
