@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -23,6 +24,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     {
         private readonly IDistributedCache _cache;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
+        
+        static readonly ConcurrentDictionary<string, Lazy<Task<AuthenticateResult>>> IntrospectionDictionary =
+            new ConcurrentDictionary<string, Lazy<Task<AuthenticateResult>>>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OAuth2IntrospectionHandler"/> class.
@@ -95,51 +99,53 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 _logger.LogTrace("Token is not cached.");
             }
-
-            // Use a LazyAsync to ensure only one thread is requesting introspection for a token - the rest will wait for the result
-            var lazyIntrospection = Options.LazyIntrospections.GetOrAdd(token, CreateLazyIntrospection);
-
+            
             try
             {
-                var response = await lazyIntrospection.Value.ConfigureAwait(false);
-
-                if (response.IsError)
+                return await IntrospectionDictionary.GetOrAdd(token, _ =>
                 {
-                    _logger.LogError("Error returned from introspection endpoint: " + response.Error);
-                    return await ReportNonSuccessAndReturn("Error returned from introspection endpoint: " + response.Error);
-                }
+                    return new Lazy<Task<AuthenticateResult>>(async () =>
+                    {
+                        var response = await LoadClaimsForToken(token);
+                        
+                        if (response.IsError)
+                        {
+                            _logger.LogError("Error returned from introspection endpoint: " + response.Error);
+                            return await ReportNonSuccessAndReturn("Error returned from introspection endpoint: " + response.Error);
+                        }
                 
-                if (response.IsActive)
-                {
-                    if (Options.EnableCaching)
-                    {
-                        var key = $"{Options.CacheKeyPrefix}{token}";
-                        await _cache.SetClaimsAsync(key, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
-                    }
+                        if (response.IsActive)
+                        {
+                            if (Options.EnableCaching)
+                            {
+                                var key = $"{Options.CacheKeyPrefix}{token}";
+                                await _cache.SetClaimsAsync(key, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                            }
 
-                    return await CreateTicket(response.Claims, token);
-                }
-                else
-                {
-                    if (Options.EnableCaching)
-                    {
-                        var key = $"{Options.CacheKeyPrefix}{token}";
+                            return await CreateTicket(response.Claims, token);
+                        }
+                        else
+                        {
+                            if (Options.EnableCaching)
+                            {
+                                var key = $"{Options.CacheKeyPrefix}{token}";
 
-                        // add an exp claim - otherwise caching will not work
-                        var claimsWithExp = response.Claims.ToList();
-                        claimsWithExp.Add(new Claim("exp", DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
-                        await _cache.SetClaimsAsync(key, claimsWithExp, Options.CacheDuration, _logger).ConfigureAwait(false);
-                    }
+                                // add an exp claim - otherwise caching will not work
+                                var claimsWithExp = response.Claims.ToList();
+                                claimsWithExp.Add(new Claim("exp",
+                                    DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
+                                await _cache.SetClaimsAsync(key, claimsWithExp, Options.CacheDuration, _logger)
+                                    .ConfigureAwait(false);
+                            }
 
-                    return await ReportNonSuccessAndReturn("Token is not active.");
-                }
+                            return await ReportNonSuccessAndReturn("Token is not active.");
+                        }
+                    });
+                }).Value;
             }
             finally
             {
-                // If caching is on and it succeeded, the claims are now in the cache.
-                // If caching is off and it succeeded, the claims will be discarded.
-                // Either way, we want to remove the temporary store of claims for this token because it is only intended for de-duping fetch requests
-                Options.LazyIntrospections.TryRemove(token, out _);
+                IntrospectionDictionary.TryRemove(token, out _);
             }
         }
 
