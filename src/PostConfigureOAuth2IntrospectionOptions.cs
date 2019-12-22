@@ -33,7 +33,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
             
             options.IntrospectionClient = new AsyncLazy<IntrospectionClient>(() => InitializeIntrospectionClient(options));
-            options.LazyIntrospections = new ConcurrentDictionary<string, AsyncLazy<TokenIntrospectionResponse>>();
         }
 
         private async Task<IntrospectionClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions options)

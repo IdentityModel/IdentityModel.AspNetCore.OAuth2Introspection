@@ -127,8 +127,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         }
 
         internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
-        internal ConcurrentDictionary<string, AsyncLazy<TokenIntrospectionResponse>> LazyIntrospections { get; set; }
-
+        
         /// <summary>
         /// Check that the options are valid. Should throw an exception if things are not ok.
         /// </summary>
