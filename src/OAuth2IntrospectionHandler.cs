@@ -24,7 +24,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     {
         private readonly IDistributedCache _cache;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
-        
+
         static readonly ConcurrentDictionary<string, Lazy<Task<AuthenticateResult>>> IntrospectionDictionary =
             new ConcurrentDictionary<string, Lazy<Task<AuthenticateResult>>>();
 
@@ -87,8 +87,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             // if caching is enable - let's check if we have a cached introspection
             if (Options.EnableCaching)
             {
-                var key = $"{Options.CacheKeyPrefix}{token}";
-                var claims = await _cache.GetClaimsAsync(key).ConfigureAwait(false);
+                var claims = await _cache.GetClaimsAsync(Options.CacheKeyPrefix, token).ConfigureAwait(false);
                 if (claims != null)
                 {
                     // find out if it is a cached inactive token
@@ -103,7 +102,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 _logger.LogTrace("Token is not cached.");
             }
-            
+
             // no cached result - let's make a network roundtrip to the introspection endpoint
             // this code block tries to make sure that we only do a single roundtrip, even when multiple requests
             // with the same token come in at the same time
@@ -114,19 +113,18 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                     return new Lazy<Task<AuthenticateResult>>(async () =>
                     {
                         var response = await LoadClaimsForToken(token);
-                        
+
                         if (response.IsError)
                         {
                             _logger.LogError("Error returned from introspection endpoint: " + response.Error);
                             return await ReportNonSuccessAndReturn("Error returned from introspection endpoint: " + response.Error);
                         }
-                
+
                         if (response.IsActive)
                         {
                             if (Options.EnableCaching)
                             {
-                                var key = $"{Options.CacheKeyPrefix}{token}";
-                                await _cache.SetClaimsAsync(key, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                                await _cache.SetClaimsAsync(Options.CacheKeyPrefix, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                             }
 
                             return await CreateTicket(response.Claims, token);
@@ -135,13 +133,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                         {
                             if (Options.EnableCaching)
                             {
-                                var key = $"{Options.CacheKeyPrefix}{token}";
-
                                 // add an exp claim - otherwise caching will not work
                                 var claimsWithExp = response.Claims.ToList();
                                 claimsWithExp.Add(new Claim("exp",
                                     DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
-                                await _cache.SetClaimsAsync(key, claimsWithExp, Options.CacheDuration, _logger)
+                                await _cache.SetClaimsAsync(Options.CacheKeyPrefix, token, claimsWithExp, Options.CacheDuration, _logger)
                                     .ConfigureAwait(false);
                             }
 

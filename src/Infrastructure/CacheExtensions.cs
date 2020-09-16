@@ -23,9 +23,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             Settings.Converters.Add(new ClaimConverter());
         }
 
-        public static async Task<IEnumerable<Claim>> GetClaimsAsync(this IDistributedCache cache, string token)
+        public static async Task<IEnumerable<Claim>> GetClaimsAsync(this IDistributedCache cache, string cacheKeyPrefix, string token)
         {
-            var bytes = await cache.GetAsync(token.Sha256()).ConfigureAwait(false);
+            var bytes = await cache.GetAsync($"{cacheKeyPrefix}{token.Sha256()}").ConfigureAwait(false);
 
             if (bytes == null)
             {
@@ -36,7 +36,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return JsonConvert.DeserializeObject<IEnumerable<Claim>>(json, Settings);
         }
 
-        public static async Task SetClaimsAsync(this IDistributedCache cache, string token, IEnumerable<Claim> claims, TimeSpan duration, ILogger logger)
+        public static async Task SetClaimsAsync(this IDistributedCache cache, string cacheKeyPrefix, string token, IEnumerable<Claim> claims, TimeSpan duration, ILogger logger)
         {
             var expClaim = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Expiration);
             if (expClaim == null)
@@ -48,7 +48,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             var now = DateTimeOffset.UtcNow;
             var expiration = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expClaim.Value));
             logger.LogDebug("Token will expire in {expiration}", expiration);
-            
+
 
             if (expiration <= now)
             {
@@ -70,7 +70,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             var bytes = Encoding.UTF8.GetBytes(json);
 
             logger.LogDebug("Setting cache item expiration to {expiration}", absoluteLifetime);
-            await cache.SetAsync(token.Sha256(), bytes, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteLifetime }).ConfigureAwait(false);
+            await cache.SetAsync($"{cacheKeyPrefix}{token.Sha256()}", bytes, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteLifetime }).ConfigureAwait(false);
         }
     }
 }

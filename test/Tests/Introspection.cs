@@ -2,12 +2,17 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using FluentAssertions;
+using IdentityModel;
 using IdentityModel.AspNetCore.OAuth2Introspection;
 using IdentityModel.Client;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Tests.Util;
 using Xunit;
@@ -207,7 +212,7 @@ namespace Tests
             var expectedToken = "expected_token";
             var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
 
-            var client = PipelineFactory.CreateClient((o) =>
+            var server = PipelineFactory.CreateServer((o) =>
             {
                 _options(o);
 
@@ -215,7 +220,7 @@ namespace Tests
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
             }, handler, true);
-
+            var client = server.CreateClient();
             client.SetBearerToken(expectedToken);
 
             var firstResponse = await client.GetAsync("http://test");
@@ -228,6 +233,39 @@ namespace Tests
             var responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseDataStr);
 
             responseData.Should().Contain("token", expectedToken);
+            AssertCacheItemExists(server, string.Empty, expectedToken);
+        }
+
+        [Fact]
+        public async Task ActiveToken_With_SavedToken_And_Caching_With_Cache_Key_Prefix()
+        {
+            var expectedToken = "expected_token";
+            var cacheKeyPrefix = "KeyPrefix";
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
+
+            var server = PipelineFactory.CreateServer((o) =>
+            {
+                _options(o);
+
+                o.SaveToken = true;
+                o.EnableCaching = true;
+                o.CacheKeyPrefix = cacheKeyPrefix;
+                o.CacheDuration = TimeSpan.FromMinutes(10);
+            }, handler, true);
+            var client = server.CreateClient();
+            client.SetBearerToken(expectedToken);
+
+            var firstResponse = await client.GetAsync("http://test");
+            firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var secondResponse = await client.GetAsync("http://test");
+            secondResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var responseDataStr = await secondResponse.Content.ReadAsStringAsync();
+            var responseData = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseDataStr);
+
+            responseData.Should().Contain("token", expectedToken);
+            AssertCacheItemExists(server, cacheKeyPrefix, expectedToken);
         }
 
         [Fact]
@@ -236,15 +274,15 @@ namespace Tests
             var expectedToken = "expected_token";
             var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
 
-            var client = PipelineFactory.CreateClient((o) =>
+            var server = PipelineFactory.CreateServer((o) =>
             {
                 _options(o);
-                
+
                 o.SaveToken = true;
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
             }, handler, true);
-
+            var client = server.CreateClient();
             client.SetBearerToken(expectedToken);
 
             var firstResponse = await client.GetAsync("http://test");
@@ -255,6 +293,7 @@ namespace Tests
             handler.SentIntrospectionRequest = false;
             var secondResponse = await client.GetAsync("http://test");
             handler.SentIntrospectionRequest.Should().BeFalse();
+            AssertCacheItemExists(server, string.Empty, expectedToken);
         }
 
         [Fact]
@@ -263,7 +302,7 @@ namespace Tests
             var expectedToken = "expected_token";
             var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
 
-            var client = PipelineFactory.CreateClient((o) =>
+            var server = PipelineFactory.CreateServer((o) =>
             {
                 _options(o);
 
@@ -271,7 +310,7 @@ namespace Tests
                 o.EnableCaching = true;
                 o.CacheDuration = TimeSpan.FromMinutes(10);
             }, handler, true);
-
+            var client = server.CreateClient();
             client.SetBearerToken(expectedToken);
 
             var firstResponse = await client.GetAsync("http://test");
@@ -283,6 +322,7 @@ namespace Tests
             var secondResponse = await client.GetAsync("http://test");
             secondResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
             handler.SentIntrospectionRequest.Should().BeFalse();
+            AssertCacheItemExists(server, string.Empty, expectedToken);
         }
 
         [Fact]
@@ -299,6 +339,14 @@ namespace Tests
             handler.IsDiscoveryFailureTest = false;
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+
+        private void AssertCacheItemExists(TestServer testServer, string cacheKeyPrefix, string token)
+        {
+            var cache = testServer.Services.GetService<IDistributedCache>();
+            var cacheItem = cache.GetString($"{cacheKeyPrefix}{token.ToSha256()}");
+
+            cacheItem.Should().NotBeNullOrEmpty();
         }
     }
 }
