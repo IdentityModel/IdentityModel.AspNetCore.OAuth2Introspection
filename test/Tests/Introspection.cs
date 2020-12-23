@@ -86,7 +86,7 @@ namespace Tests
 
                     return Task.CompletedTask;
                 };
-            }, handler, true);
+            }, handler);
 
             client.SetBearerToken("sometoken");
 
