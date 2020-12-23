@@ -79,14 +79,14 @@ namespace Tests
                     count++;
                     e.ClientAssertion = new ClientAssertion
                     {
-                        Type = OidcConstants.ClientAssertionTypes.JwtBearer,
+                        Type = "testType",
                         Value = "testAssertion" + count
                     };
                     e.ClientAssertionExpirationTime = DateTime.Now.AddMilliseconds(ttl);
 
                     return Task.CompletedTask;
                 };
-            }, handler);
+            }, handler, true);
 
             client.SetBearerToken("sometoken");
 
@@ -95,7 +95,7 @@ namespace Tests
 
             var request = handler.LastRequest;
             request.Should().ContainKey("client_id").WhichValue.Should().Be(clientId);
-            request.Should().ContainKey("client_assertion_type").WhichValue.Should().Be(OidcConstants.ClientAssertionTypes.JwtBearer);
+            request.Should().ContainKey("client_assertion_type").WhichValue.Should().Be("testType");
             request.Should().ContainKey("client_assertion").WhichValue.Should().Be(assertion1);
 
             result = await client.GetAsync("http://test");
@@ -103,7 +103,7 @@ namespace Tests
 
             request = handler.LastRequest;
             request.Should().ContainKey("client_id").WhichValue.Should().Be(clientId);
-            request.Should().ContainKey("client_assertion_type").WhichValue.Should().Be(OidcConstants.ClientAssertionTypes.JwtBearer);
+            request.Should().ContainKey("client_assertion_type").WhichValue.Should().Be("testType");
             request.Should().ContainKey("client_assertion").WhichValue.Should().Be(assertion2);
         }
 
