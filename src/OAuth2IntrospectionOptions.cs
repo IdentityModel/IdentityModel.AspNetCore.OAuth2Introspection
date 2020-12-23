@@ -6,7 +6,7 @@ using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Concurrent;
+using System.Net.Http;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
@@ -49,6 +49,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// Specifies the the client assertion to be used (optional replacement of simple client secret)
         /// </summary>
         public ClientAssertion ClientAssertion { get; set; } = new ClientAssertion();
+
+        internal DateTime ClientAssertionExpirationTime { get; set; }
 
         /// <summary>
         /// Specifies how client id and secret are being sent
@@ -126,7 +128,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             set { base.Events = value; }
         }
 
-        internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
+        internal AsyncLazy<HttpClient> IntrospectionClient { get; set; }
         
         /// <summary>
         /// Check that the options are valid. Should throw an exception if things are not ok.

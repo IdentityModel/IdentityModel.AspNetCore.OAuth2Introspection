@@ -23,6 +23,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
     public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2IntrospectionOptions>
     {
         private readonly IDistributedCache _cache;
+        private readonly object _assertionUpdateLockObj = new object();
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
         static readonly ConcurrentDictionary<string, Lazy<Task<AuthenticateResult>>> IntrospectionDictionary =
@@ -177,7 +178,43 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private async Task<TokenIntrospectionResponse> LoadClaimsForToken(string token)
         {
             var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
-            return await introspectionClient.Introspect(token, Options.TokenTypeHint).ConfigureAwait(false);
+            using var request = CreateTokenIntrospectionRequest(token);
+            return await introspectionClient.IntrospectTokenAsync(request).ConfigureAwait(false);
+        }
+
+        private TokenIntrospectionRequest CreateTokenIntrospectionRequest(string token)
+        {
+            if (Options.ClientAssertionExpirationTime <= DateTime.Now)
+            {
+                lock (_assertionUpdateLockObj)
+                {
+                    if (Options.ClientAssertionExpirationTime <= DateTime.Now)
+                    {
+                        var updateClientAssertionContext = new UpdateClientAssertionContext(Context, Scheme, Options)
+                        {
+                            ClientAssertion = Options.ClientAssertion ?? new ClientAssertion()
+                        };
+
+                        Events.UpdateClientAssertion(updateClientAssertionContext);
+
+                        Options.ClientAssertion = updateClientAssertionContext.ClientAssertion;
+                        Options.ClientAssertionExpirationTime =
+                            updateClientAssertionContext.ClientAssertionExpirationTime;
+                    }
+                }
+            }
+
+            return new TokenIntrospectionRequest
+            {
+                Token = token,
+                TokenTypeHint = Options.TokenTypeHint,
+                Address = Options.IntrospectionEndpoint,
+                ClientId = Options.ClientId,
+                ClientSecret = Options.ClientSecret,
+                ClientAssertion = Options.ClientAssertion ?? new ClientAssertion(),
+                ClientCredentialStyle = Options.ClientCredentialStyle,
+                AuthorizationHeaderStyle = Options.AuthorizationHeaderStyle,
+            };
         }
 
         private async Task<AuthenticateResult> CreateTicket(IEnumerable<Claim> claims, string token)
