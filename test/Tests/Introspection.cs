@@ -82,7 +82,7 @@ namespace Tests
                         Type = "testType",
                         Value = "testAssertion" + count
                     };
-                    e.ClientAssertionExpirationTime = DateTime.Now.AddMilliseconds(ttl);
+                    e.ClientAssertionExpirationTime = DateTime.UtcNow.AddMilliseconds(ttl);
 
                     return Task.CompletedTask;
                 };
