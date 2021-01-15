@@ -26,7 +26,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             var target = new ClaimLite
             {
                 Type = value.Type,
-                Value = value.Value,
+                Value = value.Value
             };
 
             JsonSerializer.Serialize(writer, target, options);

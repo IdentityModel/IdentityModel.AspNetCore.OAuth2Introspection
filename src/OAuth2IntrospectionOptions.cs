@@ -6,7 +6,6 @@ using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Concurrent;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
