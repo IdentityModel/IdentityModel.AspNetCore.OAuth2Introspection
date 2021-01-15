@@ -184,7 +184,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
         private TokenIntrospectionRequest CreateTokenIntrospectionRequest(string token)
         {
-
             if (Options.ClientSecret == null && Options.ClientAssertionExpirationTime <= DateTime.UtcNow)
             {
                 lock (_assertionUpdateLockObj)
