@@ -44,7 +44,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// <returns></returns>
         public static Func<HttpRequest, string> FromQueryString(string name = "access_token")
         {
-            return (request) => request.Query[name].FirstOrDefault();
+            return request => request.Query[name].FirstOrDefault();
         }
     }
 }
