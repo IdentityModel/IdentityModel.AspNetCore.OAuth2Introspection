@@ -56,17 +56,14 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             
             if (disco.IsError)
             {
-                if (disco.ErrorType == ResponseErrorType.Http)
+                switch (disco.ErrorType)
                 {
-                    throw new InvalidOperationException($"Discovery endpoint {options.Authority} is unavailable: {disco.Error}");
-                }
-                if (disco.ErrorType == ResponseErrorType.PolicyViolation)
-                {
-                    throw new InvalidOperationException($"Policy error while contacting the discovery endpoint {options.Authority}: {disco.Error}");
-                }
-                if (disco.ErrorType == ResponseErrorType.Exception)
-                {
-                    throw new InvalidOperationException($"Error parsing discovery document from {options.Authority}: {disco.Error}");
+                    case ResponseErrorType.Http:
+                        throw new InvalidOperationException($"Discovery endpoint {options.Authority} is unavailable: {disco.Error}");
+                    case ResponseErrorType.PolicyViolation:
+                        throw new InvalidOperationException($"Policy error while contacting the discovery endpoint {options.Authority}: {disco.Error}");
+                    case ResponseErrorType.Exception:
+                        throw new InvalidOperationException($"Error parsing discovery document from {options.Authority}: {disco.Error}");
                 }
             }
 
