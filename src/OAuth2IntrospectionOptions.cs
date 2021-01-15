@@ -45,10 +45,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// </summary>
         public string ClientSecret { get; set; }
 
-        /// <summary>
-        /// Specifies the the client assertion to be used (optional replacement of simple client secret)
-        /// </summary>
-        public ClientAssertion ClientAssertion { get; set; } = new ClientAssertion();
+        internal ClientAssertion ClientAssertion { get; set; }
 
         internal DateTime ClientAssertionExpirationTime { get; set; }
 
