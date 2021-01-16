@@ -8,9 +8,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -25,8 +25,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly IDistributedCache _cache;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
-        static readonly ConcurrentDictionary<string, Lazy<Task<AuthenticateResult>>> IntrospectionDictionary =
-            new ConcurrentDictionary<string, Lazy<Task<AuthenticateResult>>>();
+        static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
+            new ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OAuth2IntrospectionHandler"/> class.
@@ -94,10 +94,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                     var isInActive = claims.FirstOrDefault(c => string.Equals(c.Type, "active", StringComparison.OrdinalIgnoreCase) && string.Equals(c.Value, "false", StringComparison.OrdinalIgnoreCase));
                     if (isInActive != null)
                     {
-                        return await ReportNonSuccessAndReturn("Cached token is not active.");
+                        return await ReportNonSuccessAndReturn("Cached token is not active.", Context, Scheme, Events, Options);
                     }
 
-                    return await CreateTicket(claims, token);
+                    return await CreateTicket(claims, token, Context, Scheme, Events, Options);
                 }
 
                 _logger.LogTrace("Token is not cached.");
@@ -108,43 +108,44 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             // with the same token come in at the same time
             try
             {
-                return await IntrospectionDictionary.GetOrAdd(token, _ =>
+                Lazy<Task<TokenIntrospectionResponse>> GetTokenIntrospectionResponseLazy(string _)
                 {
-                    return new Lazy<Task<AuthenticateResult>>(async () =>
+                    return new Lazy<Task<TokenIntrospectionResponse>>(async () => await LoadClaimsForToken(token, Options));
+                }
+
+                var response = await IntrospectionDictionary
+                    .GetOrAdd(token, GetTokenIntrospectionResponseLazy)
+                    .Value;
+
+                if (response.IsError)
+                {
+                    _logger.LogError("Error returned from introspection endpoint: " + response.Error);
+                    return await ReportNonSuccessAndReturn("Error returned from introspection endpoint: " + response.Error, Context, Scheme, Events, Options);
+                }
+
+                if (response.IsActive)
+                {
+                    if (Options.EnableCaching)
                     {
-                        var response = await LoadClaimsForToken(token);
+                        await _cache.SetClaimsAsync(Options.CacheKeyPrefix, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                    }
 
-                        if (response.IsError)
-                        {
-                            _logger.LogError("Error returned from introspection endpoint: " + response.Error);
-                            return await ReportNonSuccessAndReturn("Error returned from introspection endpoint: " + response.Error);
-                        }
+                    return await CreateTicket(response.Claims, token, Context, Scheme, Events, Options);
+                }
+                else
+                {
+                    if (Options.EnableCaching)
+                    {
+                        // add an exp claim - otherwise caching will not work
+                        var claimsWithExp = response.Claims.ToList();
+                        claimsWithExp.Add(new Claim("exp",
+                            DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
+                        await _cache.SetClaimsAsync(Options.CacheKeyPrefix, token, claimsWithExp, Options.CacheDuration, _logger)
+                            .ConfigureAwait(false);
+                    }
 
-                        if (response.IsActive)
-                        {
-                            if (Options.EnableCaching)
-                            {
-                                await _cache.SetClaimsAsync(Options.CacheKeyPrefix, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
-                            }
-
-                            return await CreateTicket(response.Claims, token);
-                        }
-                        else
-                        {
-                            if (Options.EnableCaching)
-                            {
-                                // add an exp claim - otherwise caching will not work
-                                var claimsWithExp = response.Claims.ToList();
-                                claimsWithExp.Add(new Claim("exp",
-                                    DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
-                                await _cache.SetClaimsAsync(Options.CacheKeyPrefix, token, claimsWithExp, Options.CacheDuration, _logger)
-                                    .ConfigureAwait(false);
-                            }
-
-                            return await ReportNonSuccessAndReturn("Token is not active.");
-                        }
-                    });
-                }).Value;
+                    return await ReportNonSuccessAndReturn("Token is not active.", Context, Scheme, Events, Options);
+                }
             }
             finally
             {
@@ -152,14 +153,19 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
         }
 
-        private async Task<AuthenticateResult> ReportNonSuccessAndReturn(string error)
+        private static async Task<AuthenticateResult> ReportNonSuccessAndReturn(
+            string error, 
+            HttpContext httpContext, 
+            AuthenticationScheme scheme, 
+            OAuth2IntrospectionEvents events, 
+            OAuth2IntrospectionOptions options)
         {
-            var authenticationFailedContext = new AuthenticationFailedContext(Context, Scheme, Options)
+            var authenticationFailedContext = new AuthenticationFailedContext(httpContext, scheme, options)
             {
                 Error = error
             };
 
-            await Events.AuthenticationFailed(authenticationFailedContext);
+            await events.AuthenticationFailed(authenticationFailedContext);
 
             if (authenticationFailedContext.Result != null)
             {
@@ -169,36 +175,37 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return AuthenticateResult.Fail(error);
         }
 
-        private AsyncLazy<TokenIntrospectionResponse> CreateLazyIntrospection(string token)
+        private static async Task<TokenIntrospectionResponse> LoadClaimsForToken(string token, OAuth2IntrospectionOptions options)
         {
-            return new AsyncLazy<TokenIntrospectionResponse>(() => LoadClaimsForToken(token));
+            var introspectionClient = await options.IntrospectionClient.Value.ConfigureAwait(false);
+            return await introspectionClient.Introspect(token, options.TokenTypeHint).ConfigureAwait(false);
         }
 
-        private async Task<TokenIntrospectionResponse> LoadClaimsForToken(string token)
+        private static async Task<AuthenticateResult> CreateTicket(
+            IEnumerable<Claim> claims, 
+            string token, 
+            HttpContext httpContext, 
+            AuthenticationScheme scheme, 
+            OAuth2IntrospectionEvents events,
+            OAuth2IntrospectionOptions options)
         {
-            var introspectionClient = await Options.IntrospectionClient.Value.ConfigureAwait(false);
-            return await introspectionClient.Introspect(token, Options.TokenTypeHint).ConfigureAwait(false);
-        }
-
-        private async Task<AuthenticateResult> CreateTicket(IEnumerable<Claim> claims, string token)
-        {
-            var authenticationType = Options.AuthenticationType ?? Scheme.Name;
-            var id = new ClaimsIdentity(claims, authenticationType, Options.NameClaimType, Options.RoleClaimType);
+            var authenticationType = options.AuthenticationType ?? scheme.Name;
+            var id = new ClaimsIdentity(claims, authenticationType, options.NameClaimType, options.RoleClaimType);
             var principal = new ClaimsPrincipal(id);
 
-            var tokenValidatedContext = new TokenValidatedContext(Context, Scheme, Options)
+            var tokenValidatedContext = new TokenValidatedContext(httpContext, scheme, options)
             {
                 Principal = principal,
                 SecurityToken = token
             };
 
-            await Events.TokenValidated(tokenValidatedContext);
+            await events.TokenValidated(tokenValidatedContext);
             if (tokenValidatedContext.Result != null)
             {
                 return tokenValidatedContext.Result;
             }
 
-            if (Options.SaveToken)
+            if (options.SaveToken)
             {
                 tokenValidatedContext.Properties.StoreTokens(new[]
                 {
