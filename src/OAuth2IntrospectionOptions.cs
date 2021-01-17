@@ -45,6 +45,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// </summary>
         public string ClientSecret { get; set; }
 
+        internal object AssertionUpdateLockObj = new object();
+
         internal ClientAssertion ClientAssertion { get; set; }
 
         internal DateTime ClientAssertionExpirationTime { get; set; }
