@@ -22,6 +22,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public Func<TokenValidatedContext, Task> OnTokenValidated { get; set; } = context => Task.CompletedTask;
 
         /// <summary>
+        /// Invoked when client assertion need to be updated.
+        /// </summary>
+        public Func<UpdateClientAssertionContext, Task> OnUpdateClientAssertion { get; set; } = context => Task.CompletedTask;
+
+        /// <summary>
         /// Invoked if exceptions are thrown during request processing. The exceptions will be re-thrown after this event unless suppressed.
         /// </summary>
         public virtual Task AuthenticationFailed(AuthenticationFailedContext context) => OnAuthenticationFailed(context);
@@ -30,5 +35,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// Invoked after the security token has passed validation and a ClaimsIdentity has been generated.
         /// </summary>
         public virtual Task TokenValidated(TokenValidatedContext context) => OnTokenValidated(context);
+
+        /// <summary>
+        /// Invoked when client assertion need to be updated.
+        /// </summary>
+        public virtual Task UpdateClientAssertion(UpdateClientAssertionContext context) => OnUpdateClientAssertion(context);
     }
 }

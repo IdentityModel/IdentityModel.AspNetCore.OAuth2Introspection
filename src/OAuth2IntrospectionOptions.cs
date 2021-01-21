@@ -1,4 +1,4 @@
-﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
+// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
@@ -6,6 +6,7 @@ using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Net.Http;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
@@ -44,10 +45,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// </summary>
         public string ClientSecret { get; set; }
 
-        /// <summary>
-        /// Specifies the the client assertion to be used (optional replacement of simple client secret)
-        /// </summary>
-        public ClientAssertion ClientAssertion { get; set; } = new ClientAssertion();
+        internal object AssertionUpdateLockObj = new object();
+
+        internal ClientAssertion ClientAssertion { get; set; }
+
+        internal DateTime ClientAssertionExpirationTime { get; set; }
 
         /// <summary>
         /// Specifies how client id and secret are being sent
@@ -125,7 +127,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             set { base.Events = value; }
         }
 
-        internal AsyncLazy<IntrospectionClient> IntrospectionClient { get; set; }
+        internal AsyncLazy<HttpClient> IntrospectionClient { get; set; }
         
         /// <summary>
         /// Check that the options are valid. Should throw an exception if things are not ok.

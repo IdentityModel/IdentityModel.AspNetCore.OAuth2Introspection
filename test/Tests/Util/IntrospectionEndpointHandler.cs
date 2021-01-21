@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -25,6 +26,7 @@ namespace Tests.Util
         public bool SentIntrospectionRequest { get; set; } = false;
 
         public Dictionary<string, object> AdditionalValues { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, string> LastRequest { get; set; } = new Dictionary<string, string>();
         public string IntrospectionEndpoint { get; set; }
         public string DiscoveryEndpoint { get; set; }
         public bool IsDiscoveryFailureTest { get; set; } = false;
@@ -51,7 +53,7 @@ namespace Tests.Util
             }
         }
 
-        protected Task<HttpResponseMessage> SendDiscoveryAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+        protected Task<HttpResponseMessage> SendDiscoveryAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (IsDiscoveryFailureTest)
             {
@@ -86,50 +88,61 @@ namespace Tests.Util
             SentIntrospectionRequest = true;
             IntrospectionEndpoint = request.RequestUri.AbsoluteUri;
 
-            if (_behavior == Behavior.Unauthorized)
-            {
-                var response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
-                return Task.FromResult(response);
-            }
-            if (_behavior == Behavior.Active)
-            {
-                var responseObject = new Dictionary<string, object>
-                {
-                    { "active", true }
-                };
+            LastRequest = ExtractFormContent(request);
 
-                foreach (var item in AdditionalValues)
+            switch (_behavior)
+            {
+                case Behavior.Unauthorized:
                 {
-                    responseObject.Add(item.Key, item.Value);
+                    var response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
+                    return Task.FromResult(response);
                 }
-
-                var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
-
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                case Behavior.Active:
                 {
-                    Content = new StringContent(json, Encoding.UTF8, "application/json")
-                };
+                    var responseObject = new Dictionary<string, object>
+                    {
+                        {"active", true}
+                    };
 
-                return Task.FromResult(response);
+                    foreach (var item in AdditionalValues)
+                    {
+                        responseObject.Add(item.Key, item.Value);
+                    }
+
+                    var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
+
+                    var response = new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(json, Encoding.UTF8, "application/json")
+                    };
+
+                    return Task.FromResult(response);
+                }
+                case Behavior.Inactive:
+                {
+                    var responseObject = new Dictionary<string, object>
+                    {
+                        {"active", false}
+                    };
+
+                    var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
+
+                    var response = new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(json, Encoding.UTF8, "application/json")
+                    };
+
+                    return Task.FromResult(response);
+                }
+                default:
+                    throw new NotImplementedException();
             }
-            if (_behavior == Behavior.Inactive)
-            {
-                var responseObject = new Dictionary<string, object>
-                {
-                    { "active", false }
-                };
+        }
 
-                var json = SimpleJson.SimpleJson.SerializeObject(responseObject);
-
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(json, Encoding.UTF8, "application/json")
-                };
-
-                return Task.FromResult(response);
-            }
-
-            throw new NotImplementedException();
+        private static Dictionary<string, string> ExtractFormContent(HttpRequestMessage request)
+        {
+            return request.Content.ReadAsStringAsync().Result.Split("&")
+                .Select(item => item.Split("=")).ToDictionary(item => item[0], item => Uri.UnescapeDataString(item[1]));
         }
     }
 }

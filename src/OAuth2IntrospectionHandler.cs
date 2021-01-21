@@ -1,4 +1,4 @@
-﻿// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
+// Copyright (c) Dominick Baier & Brock Allen. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System;
@@ -110,7 +110,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             {
                 Lazy<Task<TokenIntrospectionResponse>> GetTokenIntrospectionResponseLazy(string _)
                 {
-                    return new Lazy<Task<TokenIntrospectionResponse>>(async () => await LoadClaimsForToken(token, Options));
+                    return new Lazy<Task<TokenIntrospectionResponse>>(async () => await LoadClaimsForToken(token, Context, Scheme, Events, Options));
                 }
 
                 var response = await IntrospectionDictionary
@@ -175,10 +175,56 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return AuthenticateResult.Fail(error);
         }
 
-        private static async Task<TokenIntrospectionResponse> LoadClaimsForToken(string token, OAuth2IntrospectionOptions options)
+        private static async Task<TokenIntrospectionResponse> LoadClaimsForToken(
+	        string token, 
+	        HttpContext context, 
+	        AuthenticationScheme scheme, 
+	        OAuth2IntrospectionEvents events, 
+	        OAuth2IntrospectionOptions options)
         {
             var introspectionClient = await options.IntrospectionClient.Value.ConfigureAwait(false);
-            return await introspectionClient.Introspect(token, options.TokenTypeHint).ConfigureAwait(false);
+            using var request = CreateTokenIntrospectionRequest(token, context, scheme, events, options);
+            return await introspectionClient.IntrospectTokenAsync(request).ConfigureAwait(false);
+        }
+
+        private static TokenIntrospectionRequest CreateTokenIntrospectionRequest(
+	        string token,
+	        HttpContext context,
+	        AuthenticationScheme scheme,
+	        OAuth2IntrospectionEvents events,
+            OAuth2IntrospectionOptions options)
+        {
+            if (options.ClientSecret == null && options.ClientAssertionExpirationTime <= DateTime.UtcNow)
+            {
+                lock (options.AssertionUpdateLockObj)
+                {
+                    if (options.ClientAssertionExpirationTime <= DateTime.UtcNow)
+                    {
+                        var updateClientAssertionContext = new UpdateClientAssertionContext(context, scheme, options)
+                        {
+                            ClientAssertion = options.ClientAssertion ?? new ClientAssertion()
+                        };
+
+                        events.UpdateClientAssertion(updateClientAssertionContext);
+
+                        options.ClientAssertion = updateClientAssertionContext.ClientAssertion;
+                        options.ClientAssertionExpirationTime =
+                            updateClientAssertionContext.ClientAssertionExpirationTime;
+                    }
+                }
+            }
+
+            return new TokenIntrospectionRequest
+            {
+                Token = token,
+                TokenTypeHint = options.TokenTypeHint,
+                Address = options.IntrospectionEndpoint,
+                ClientId = options.ClientId,
+                ClientSecret = options.ClientSecret,
+                ClientAssertion = options.ClientAssertion ?? new ClientAssertion(),
+                ClientCredentialStyle = options.ClientCredentialStyle,
+                AuthorizationHeaderStyle = options.AuthorizationHeaderStyle,
+            };
         }
 
         private static async Task<AuthenticateResult> CreateTicket(

@@ -20,13 +20,17 @@ namespace Tests
 {
     public class Introspection
     {
+
+        private static readonly string clientId = "client";
+        private static readonly string clientSecret = "secret";
+
         readonly Action<OAuth2IntrospectionOptions> _options = (o) =>
         {
             o.Authority = "https://authority.com";
             o.DiscoveryPolicy.RequireKeySet = false;
 
-            o.ClientId = "scope";
-            o.ClientSecret = "secret";
+            o.ClientId = clientId;
+            o.ClientSecret = clientSecret;
         };
 
         [Fact]
@@ -46,11 +50,61 @@ namespace Tests
         {
             var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
-            var client = PipelineFactory.CreateClient((o) => _options(o), handler);
+            var client = PipelineFactory.CreateClient(_options, handler);
             client.SetBearerToken("sometoken");
 
             var result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var request = handler.LastRequest;
+            request.Should().ContainKey("client_id").WhichValue.Should().Be(clientId);
+            request.Should().ContainKey("client_secret").WhichValue.Should().Be(clientSecret);
+        }
+
+        [Theory]
+        [InlineData(5000, "testAssertion1", "testAssertion1")]
+        [InlineData(-5000, "testAssertion1", "testAssertion2")]
+        public async Task ActiveToken_With_ClientAssertion(int ttl, string assertion1, string assertion2)
+        {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+            var count = 0;
+
+            var client = PipelineFactory.CreateClient((o) =>
+            {
+                _options(o);
+                o.ClientSecret = null;
+
+                o.Events.OnUpdateClientAssertion = e =>
+                {
+                    count++;
+                    e.ClientAssertion = new ClientAssertion
+                    {
+                        Type = "testType",
+                        Value = "testAssertion" + count
+                    };
+                    e.ClientAssertionExpirationTime = DateTime.UtcNow.AddMilliseconds(ttl);
+
+                    return Task.CompletedTask;
+                };
+            }, handler);
+
+            client.SetBearerToken("sometoken");
+
+            var result = await client.GetAsync("http://test");
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var request = handler.LastRequest;
+            request.Should().ContainKey("client_id").WhichValue.Should().Be(clientId);
+            request.Should().ContainKey("client_assertion_type").WhichValue.Should().Be("testType");
+            request.Should().ContainKey("client_assertion").WhichValue.Should().Be(assertion1);
+
+            result = await client.GetAsync("http://test");
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            request = handler.LastRequest;
+            request.Should().ContainKey("client_id").WhichValue.Should().Be(clientId);
+            request.Should().ContainKey("client_assertion_type").WhichValue.Should().Be("testType");
+            request.Should().ContainKey("client_assertion").WhichValue.Should().Be(assertion2);
         }
 
         [Fact]

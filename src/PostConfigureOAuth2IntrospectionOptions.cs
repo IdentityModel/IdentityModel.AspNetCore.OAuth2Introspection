@@ -31,34 +31,17 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
                 throw new ArgumentException("Caching is enabled, but no IDistributedCache is found in the services collection", nameof(_cache));
             }
             
-            options.IntrospectionClient = new AsyncLazy<IntrospectionClient>(() => InitializeIntrospectionClient(options));
+            options.IntrospectionClient = new AsyncLazy<HttpClient>(() => InitializeIntrospectionClient(options));
         }
 
-        private async Task<IntrospectionClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions options)
+        private async Task<HttpClient> InitializeIntrospectionClient(OAuth2IntrospectionOptions options)
         {
-            string endpoint;
-
-            if (options.IntrospectionEndpoint.IsPresent())
+            if (!options.IntrospectionEndpoint.IsPresent())
             {
-                endpoint = options.IntrospectionEndpoint;
-            }
-            else
-            {
-                endpoint = await GetIntrospectionEndpointFromDiscoveryDocument(options).ConfigureAwait(false);
-                options.IntrospectionEndpoint = endpoint;
+                options.IntrospectionEndpoint = await GetIntrospectionEndpointFromDiscoveryDocument(options).ConfigureAwait(false);
             }
 
-            HttpMessageInvoker clientFunc() => _httpClientFactory.CreateClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
-
-            return new IntrospectionClient(clientFunc, new IntrospectionClientOptions
-            {
-                Address = endpoint,
-                ClientId = options.ClientId,
-                ClientSecret = options.ClientSecret,
-                ClientAssertion = options.ClientAssertion ?? new ClientAssertion(),
-                ClientCredentialStyle = options.ClientCredentialStyle,
-                AuthorizationHeaderStyle = options.AuthorizationHeaderStyle
-            });
+            return _httpClientFactory.CreateClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
         }
 
         private async Task<string> GetIntrospectionEndpointFromDiscoveryDocument(OAuth2IntrospectionOptions options)
