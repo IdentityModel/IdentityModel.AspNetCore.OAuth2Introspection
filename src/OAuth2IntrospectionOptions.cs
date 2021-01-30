@@ -114,6 +114,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public string CacheKeyPrefix { get; set; } = string.Empty;
 
         /// <summary>
+        /// Specifies the method how to generate the cache key from the token
+        /// </summary>
+        public Func<OAuth2IntrospectionOptions,string, string> CacheKeyGenerator { get; set; } = CacheUtils.CacheKeyFromToken();
+
+        /// <summary>
         /// Specifies the method how to retrieve the token from the HTTP request
         /// </summary>
         public Func<HttpRequest, string> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();

@@ -29,9 +29,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             Options.Converters.Add(new ClaimConverter());
         }
 
-        public static async Task<IEnumerable<Claim>> GetClaimsAsync(this IDistributedCache cache, string cacheKeyPrefix, string token)
+        public static async Task<IEnumerable<Claim>> GetClaimsAsync(this IDistributedCache cache, OAuth2IntrospectionOptions options, string token)
         {
-            var bytes = await cache.GetAsync($"{cacheKeyPrefix}{token.Sha256()}").ConfigureAwait(false);
+            var cacheKey = options.CacheKeyGenerator(options,token);
+            var bytes = await cache.GetAsync(cacheKey).ConfigureAwait(false);
 
             if (bytes == null)
             {
@@ -42,7 +43,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             return JsonSerializer.Deserialize<IEnumerable<Claim>>(json, Options);
         }
 
-        public static async Task SetClaimsAsync(this IDistributedCache cache, string cacheKeyPrefix, string token, IEnumerable<Claim> claims, TimeSpan duration, ILogger logger)
+        public static async Task SetClaimsAsync(this IDistributedCache cache, OAuth2IntrospectionOptions options, string token, IEnumerable<Claim> claims, TimeSpan duration, ILogger logger)
         {
             var expClaim = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Expiration);
             if (expClaim == null)
@@ -76,7 +77,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             var bytes = Encoding.UTF8.GetBytes(json);
 
             logger.LogDebug("Setting cache item expiration to {expiration}", absoluteLifetime);
-            await cache.SetAsync($"{cacheKeyPrefix}{token.Sha256()}", bytes, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteLifetime }).ConfigureAwait(false);
+            var cacheKey = options.CacheKeyGenerator(options, token);
+            await cache.SetAsync(cacheKey, bytes, new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteLifetime }).ConfigureAwait(false);
         }
     }
 }
