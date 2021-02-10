@@ -25,7 +25,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly IDistributedCache _cache;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
-        static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
+        private static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
             new ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>>();
 
         /// <summary>
@@ -55,8 +55,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// </summary>
         protected new OAuth2IntrospectionEvents Events
         {
-            get { return (OAuth2IntrospectionEvents)base.Events; }
-            set { base.Events = value; }
+            get => (OAuth2IntrospectionEvents)base.Events;
+            set => base.Events = value;
         }
 
         /// <inheritdoc/>
@@ -68,7 +68,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// <returns></returns>
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            string token = Options.TokenRetriever(Context.Request);
+            var token = Options.TokenRetriever(Context.Request);
 
             // no token - nothing to do here
             if (token.IsMissing())
@@ -167,12 +167,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             await events.AuthenticationFailed(authenticationFailedContext);
 
-            if (authenticationFailedContext.Result != null)
-            {
-                return authenticationFailedContext.Result;
-            }
-
-            return AuthenticateResult.Fail(error);
+            return authenticationFailedContext.Result ?? AuthenticateResult.Fail(error);
         }
 
         private static async Task<TokenIntrospectionResponse> LoadClaimsForToken(

@@ -17,7 +17,7 @@ namespace Tests
         [Fact]
         public void Empty_Options()
         {
-            Action act = () => PipelineFactory.CreateClient((options) => { })
+            Action act = () => PipelineFactory.CreateClient(options => { })
                 .GetAsync("http://test").GetAwaiter().GetResult();
 
             act.Should().Throw<InvalidOperationException>()

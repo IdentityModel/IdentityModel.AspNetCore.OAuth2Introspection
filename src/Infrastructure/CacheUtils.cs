@@ -18,10 +18,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
         /// <returns></returns>
         public static Func<OAuth2IntrospectionOptions,string, string> CacheKeyFromToken()
         {
-            return (options, token) =>
-            {
-                return $"{options.CacheKeyPrefix}{token.Sha256()}";
-            };
+            return (options, token) => $"{options.CacheKeyPrefix}{token.Sha256()}";
         }
     }
 }

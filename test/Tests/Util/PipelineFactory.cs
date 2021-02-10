@@ -16,7 +16,7 @@ using IdentityModel.AspNetCore.OAuth2Introspection;
 
 namespace Tests.Util
 {
-    class PipelineFactory
+    internal static class PipelineFactory
     {
         public static TestServer CreateServer(Action<OAuth2IntrospectionOptions> options, DelegatingHandler backChannelHandler, bool addCaching = false)
         {

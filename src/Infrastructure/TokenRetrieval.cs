@@ -19,7 +19,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// <returns></returns>
         public static Func<HttpRequest, string> FromAuthorizationHeader(string scheme = "Bearer")
         {
-            return (request) =>
+            return request =>
             {
                 string authorization = request.Headers["Authorization"].FirstOrDefault();
 

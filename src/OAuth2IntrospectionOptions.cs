@@ -128,8 +128,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// </summary>
         public new OAuth2IntrospectionEvents Events
         {
-            get { return (OAuth2IntrospectionEvents)base.Events; }
-            set { base.Events = value; }
+            get => (OAuth2IntrospectionEvents)base.Events;
+            set => base.Events = value;
         }
 
         internal AsyncLazy<HttpClient> IntrospectionClient { get; set; }
