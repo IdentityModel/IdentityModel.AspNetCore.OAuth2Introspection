@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Threading.Tasks;
 using IdentityModel.AspNetCore.OAuth2Introspection;
 
 namespace Tests.Util
@@ -41,8 +42,8 @@ namespace Tests.Util
                 .Configure(app =>
                 {
                     app.UseAuthentication();
-
-                    app.Use(async (context, next) =>
+                    
+                    app.Run(async context =>
                     {
                         var user = context.User;
 

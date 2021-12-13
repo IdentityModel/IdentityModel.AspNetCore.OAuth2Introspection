@@ -9,22 +9,33 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     internal static class CacheExtensions
     {
-        internal readonly static JsonSerializerOptions Options;
+        private static readonly JsonSerializerOptions Options;
 
         static CacheExtensions()
         {
+            
+#if NET6_0_OR_GREATER
+            Options = new JsonSerializerOptions
+            {
+                IgnoreReadOnlyFields = true,
+                IgnoreReadOnlyProperties = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+#else
             Options = new JsonSerializerOptions
             {
                 IgnoreReadOnlyFields = true,
                 IgnoreReadOnlyProperties = true,
                 IgnoreNullValues = true
             };
+#endif
             
             Options.Converters.Add(new ClaimConverter());
         }
