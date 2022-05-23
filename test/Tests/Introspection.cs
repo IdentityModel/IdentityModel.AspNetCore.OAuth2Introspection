@@ -394,6 +394,31 @@ namespace Tests
             result.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
+        [Fact]
+        public async Task ActiveToken_RequestSending_AdditionalParameter_with_inline_event()
+        {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+
+            var client = PipelineFactory.CreateClient(o =>
+            {
+                _options(o);
+
+                o.Events.OnRequestSending = e =>
+                {
+                    e.TokenIntrospectionRequest.Parameters = Parameters.FromObject(new { additionalParameter = "42" });
+                    return Task.CompletedTask;
+                };
+
+            }, handler);
+
+            client.SetBearerToken("sometoken");
+
+            var result = await client.GetAsync("http://test");
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            handler.LastRequest.Should().Contain(new KeyValuePair<string, string>("additionalParameter", "42"));
+        }
+
         private void AssertCacheItemExists(TestServer testServer, string cacheKeyPrefix, string token)
         {
             var cache = testServer.Services.GetService<IDistributedCache>();
