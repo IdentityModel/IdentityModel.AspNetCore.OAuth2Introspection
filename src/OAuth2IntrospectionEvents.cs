@@ -27,6 +27,11 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public Func<UpdateClientAssertionContext, Task> OnUpdateClientAssertion { get; set; } = context => Task.CompletedTask;
 
         /// <summary>
+        /// Invoked when sending token introspection request.
+        /// </summary>
+        public Func<RequestSendingContext, Task> OnRequestSending { get; set; } = context => Task.CompletedTask;
+
+        /// <summary>
         /// Invoked if exceptions are thrown during request processing. The exceptions will be re-thrown after this event unless suppressed.
         /// </summary>
         public virtual Task AuthenticationFailed(AuthenticationFailedContext context) => OnAuthenticationFailed(context);
@@ -40,5 +45,10 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// Invoked when client assertion need to be updated.
         /// </summary>
         public virtual Task UpdateClientAssertion(UpdateClientAssertionContext context) => OnUpdateClientAssertion(context);
+
+        /// <summary>
+        /// Invoked when sending token introspection request.
+        /// </summary>
+        public virtual Task RequestSending(RequestSendingContext context) => OnRequestSending(context);
     }
 }
