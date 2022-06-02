@@ -180,12 +180,12 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             var introspectionClient = await options.IntrospectionClient.Value.ConfigureAwait(false);
             using var request = CreateTokenIntrospectionRequest(token, context, scheme, events, options);
 
-            var requestSendingContext = new RequestSendingContext(context, scheme, options)
+            var requestSendingContext = new SendingRequestContext(context, scheme, options)
             {
                 TokenIntrospectionRequest = request,
             };
 
-            await events.RequestSending(requestSendingContext);
+            await events.SendingRequest(requestSendingContext);
 
             return await introspectionClient.IntrospectTokenAsync(request).ConfigureAwait(false);
         }

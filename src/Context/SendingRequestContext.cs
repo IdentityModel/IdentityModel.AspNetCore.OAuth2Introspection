@@ -5,14 +5,14 @@ using Microsoft.AspNetCore.Http;
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     /// <summary>
-    /// Context for the RequestSending event
+    /// Context for the SendingRequest event
     /// </summary>
-    public class RequestSendingContext : BaseContext<OAuth2IntrospectionOptions>
+    public class SendingRequestContext : BaseContext<OAuth2IntrospectionOptions>
     {
         /// <summary>
         /// ctor
         /// </summary>
-        public RequestSendingContext(
+        public SendingRequestContext(
             HttpContext context,
             AuthenticationScheme scheme,
             OAuth2IntrospectionOptions options)

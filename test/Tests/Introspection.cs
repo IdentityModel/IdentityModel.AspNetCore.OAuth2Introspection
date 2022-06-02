@@ -403,7 +403,7 @@ namespace Tests
             {
                 _options(o);
 
-                o.Events.OnRequestSending = e =>
+                o.Events.OnSendingRequest = e =>
                 {
                     e.TokenIntrospectionRequest.Parameters = Parameters.FromObject(new { additionalParameter = "42" });
                     return Task.CompletedTask;
