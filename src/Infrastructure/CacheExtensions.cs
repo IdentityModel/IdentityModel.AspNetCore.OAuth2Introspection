@@ -46,14 +46,16 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public static async Task SetClaimsAsync(this IDistributedCache cache, OAuth2IntrospectionOptions options, string token, IEnumerable<Claim> claims, TimeSpan duration, ILogger logger)
         {
             var expClaim = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Expiration);
-            if (expClaim == null)
+            if (expClaim == null && !options.CacheIgnoreMissingExp)
             {
                 Log.NoExpClaimFound(logger, null);
                 return;
             }
 
             var now = DateTimeOffset.UtcNow;
-            var expiration = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expClaim.Value));
+            var expiration = expClaim == null
+                ? now + duration
+                : DateTimeOffset.FromUnixTimeSeconds(long.Parse(expClaim.Value));
             Log.TokenExpiresOn(logger, expiration, null);
 
             if (expiration <= now)
