@@ -16,3 +16,20 @@ services.AddAuthentication(OAuth2IntrospectionDefaults.AuthenticationScheme)
         options.ClientSecret = "client_secret_for_introspection_endpoint";
     });
 ```
+
+## Configuring Backchannel HTTP Client
+
+If configuration, such as using a proxy, is required for the HTTP client calling the Authority then it can be done by registering a named HTTP Client as follows
+
+```csharp
+services.AddHttpClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName) 
+    .AddHttpMessageHandler(() => 
+    {
+        //Configure client/handler for the back channel HTTP Client here
+        return new HttpClientHandler
+            {
+                UseProxy = true,
+                Proxy = new WebProxy(WebProxyUri, true)
+            };
+    }
+```
