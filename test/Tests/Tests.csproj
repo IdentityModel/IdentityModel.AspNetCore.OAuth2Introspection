@@ -1,11 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   
-  <PropertyGroup Condition=" '$(NETCoreSdkPortableRuntimeIdentifier)' != 'osx-arm64' ">
-    <TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(NETCoreSdkPortableRuntimeIdentifier)' == 'osx-arm64' ">
-    <TargetFramework>net6.0</TargetFramework>
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,13 +18,13 @@
     
     
   </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.0" />
-  </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="7.0.0" />
   </ItemGroup>
   
   
