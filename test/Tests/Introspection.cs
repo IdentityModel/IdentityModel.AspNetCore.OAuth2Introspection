@@ -3,7 +3,7 @@
 
 using FluentAssertions;
 using IdentityModel;
-using IdentityModel.AspNetCore.OAuth2Introspection;
+using Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Caching.Distributed;

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
+namespace Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
 {
     /// <summary>
     /// Defines some common cache utilities

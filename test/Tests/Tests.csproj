@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\IdentityModel.AspNetCore.OAuth2Introspection.csproj" />
+    <ProjectReference Include="..\..\src\Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection.csproj" />
   </ItemGroup>
 
   <ItemGroup>

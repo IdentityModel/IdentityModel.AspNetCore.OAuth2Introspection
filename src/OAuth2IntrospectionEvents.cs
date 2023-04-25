@@ -4,7 +4,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace IdentityModel.AspNetCore.OAuth2Introspection
+namespace Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection
 {
     /// <summary>
     /// Default implementation.

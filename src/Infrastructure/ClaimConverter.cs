@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 #pragma warning disable 1591
 
-namespace IdentityModel.AspNetCore.OAuth2Introspection
+namespace Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection
 {
     public class ClaimConverter : JsonConverter<Claim>
     {

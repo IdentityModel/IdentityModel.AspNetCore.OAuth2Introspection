@@ -13,7 +13,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading.Tasks;
-using IdentityModel.AspNetCore.OAuth2Introspection;
+using Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection;
 
 namespace Tests.Util
 {

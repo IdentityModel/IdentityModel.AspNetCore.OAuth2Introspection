@@ -15,7 +15,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace IdentityModel.AspNetCore.OAuth2Introspection
+namespace Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection
 {
     /// <summary>
     /// Authentication handler for OAuth 2.0 introspection

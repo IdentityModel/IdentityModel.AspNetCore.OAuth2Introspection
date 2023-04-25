@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace IdentityModel.AspNetCore.OAuth2Introspection
+namespace Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection
 {
     internal static class StringExtensions
     {

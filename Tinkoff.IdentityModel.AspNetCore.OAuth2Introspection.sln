@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{6A5F253F-4E84-4EB6-BEE5-6E2E3CAF591C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityModel.AspNetCore.OAuth2Introspection", "src\IdentityModel.AspNetCore.OAuth2Introspection.csproj", "{A36667F5-F498-4C2D-9671-E36A614DA090}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection", "src\Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection.csproj", "{A36667F5-F498-4C2D-9671-E36A614DA090}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "test\Tests\Tests.csproj", "{2700EC65-25D9-42C8-9C97-84B1D9007AB7}"
 EndProject

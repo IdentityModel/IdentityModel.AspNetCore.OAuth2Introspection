@@ -4,7 +4,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 
-namespace IdentityModel.AspNetCore.OAuth2Introspection
+namespace Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection
 {
     /// <summary>
     /// Context for the TokenValidated event

@@ -4,7 +4,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
+namespace Tinkoff.IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure
 {
     internal sealed class AsyncLazy<T>
     {
