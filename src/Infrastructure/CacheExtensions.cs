@@ -54,9 +54,9 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
 
             var now = DateTimeOffset.UtcNow;
+
             var expiration = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expClaim.Value));
             logger.LogDebug("Token will expire in {expiration}", expiration);
-
 
             if (expiration <= now)
             {
@@ -71,7 +71,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             }
             else
             {
-                absoluteLifetime = now.Add(duration);
+                TimeSpan remainingLifetime = expiration - now;
+                absoluteLifetime = now.Add(remainingLifetime > duration ? duration : remainingLifetime);
             }
 
             var json = JsonSerializer.Serialize(claims, Options);

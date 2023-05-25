@@ -36,6 +36,16 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public string IntrospectionEndpoint { get; set; }
 
         /// <summary>
+        /// Gets or sets a single valid audience.
+        /// </summary>
+        public string Audience { get; set; }
+
+        /// <summary>
+        /// Gets or sets a single valid audiences.
+        /// </summary>
+        public string[] Audiences { get; set; }
+
+        /// <summary>
         /// Specifies the id of the introspection client (required).
         /// </summary>
         public string ClientId { get; set; }
@@ -116,7 +126,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// <summary>
         /// Specifies the method how to generate the cache key from the token
         /// </summary>
-        public Func<OAuth2IntrospectionOptions,string, string> CacheKeyGenerator { get; set; } = CacheUtils.CacheKeyFromToken();
+        public Func<OAuth2IntrospectionOptions, string, string> CacheKeyGenerator { get; set; } = CacheUtils.CacheKeyFromToken();
 
         /// <summary>
         /// Specifies the method how to retrieve the token from the HTTP request
@@ -133,7 +143,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         }
 
         internal AsyncLazy<HttpClient> IntrospectionClient { get; set; }
-        
+
         /// <summary>
         /// Check that the options are valid. Should throw an exception if things are not ok.
         /// </summary>
