@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Tests.Util;
@@ -417,6 +418,36 @@ namespace Tests
             result.StatusCode.Should().Be(HttpStatusCode.OK);
 
             handler.LastRequest.Should().Contain(new KeyValuePair<string, string>("additionalParameter", "42"));
+        }
+
+        [Fact]
+        public async Task ActiveToken_BeforeCreatePrincipal_ParseAdditionalClaims()
+        {
+            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active)
+            {
+                AdditionalValues = new Dictionary<string, object>
+                {
+                    { "roles", new string[] { "role1", "role2" } }
+                }
+            };
+
+            var client = PipelineFactory.CreateClient(o =>
+            {
+                _options(o);
+
+                o.Events.OnParseAdditionalClaims = context =>
+                {
+                    var roles = context.ParsedJsonResponse.TryGetStringArray("roles");
+                    roles.Should().HaveCount(2);
+                    return Task.FromResult(Enumerable.Empty<System.Security.Claims.Claim>());
+                };
+
+            }, handler);
+
+            client.SetBearerToken("sometoken");
+
+            var result = await client.GetAsync("http://test");
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
         private void AssertCacheItemExists(TestServer testServer, string cacheKeyPrefix, string token)

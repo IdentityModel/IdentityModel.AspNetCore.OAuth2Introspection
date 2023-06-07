@@ -8,14 +8,14 @@ using System.Text.Json;
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     /// <summary>
-    /// Context for the ParseExtraClaims event
+    /// Context for the ParseAdditionalClaims event
     /// </summary>
-    public class ParseExtraClaimsContext : ResultContext<OAuth2IntrospectionOptions>
+    public class ParseAdditionalClaimsContext : ResultContext<OAuth2IntrospectionOptions>
     {
         /// <summary>
         /// ctor
         /// </summary>
-        public ParseExtraClaimsContext(
+        public ParseAdditionalClaimsContext(
             HttpContext context,
             AuthenticationScheme scheme,
             OAuth2IntrospectionOptions options)

@@ -38,7 +38,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// <summary>
         /// Invoked before the ClaimsIdentity has been generated to allow extra claims to be extracted from the introspection response.
         /// </summary>
-        public Func<ParseExtraClaimsContext, Task<IEnumerable<Claim>>> OnParseExtraClaims { get; set; } = context => Task.FromResult(Enumerable.Empty<Claim>());
+        public Func<ParseAdditionalClaimsContext, Task<IEnumerable<Claim>>> OnParseAdditionalClaims { get; set; } = context => Task.FromResult(Enumerable.Empty<Claim>());
 
         /// <summary>
         /// Invoked if exceptions are thrown during request processing. The exceptions will be re-thrown after this event unless suppressed.
@@ -63,6 +63,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// <summary>
         /// Invoked before the ClaimsIdentity has been generated to allow extra claims to be extracted from the introspection response.
         /// </summary>
-        public virtual Task<IEnumerable<Claim>> ParseExtraClaims(ParseExtraClaimsContext context) => OnParseExtraClaims(context);
+        public virtual Task<IEnumerable<Claim>> ParseAdditionalClaims(ParseAdditionalClaimsContext context) => OnParseAdditionalClaims(context);
     }
 }
