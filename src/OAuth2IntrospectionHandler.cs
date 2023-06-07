@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -14,6 +15,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using static IdentityModel.ClaimComparer;
+using static IdentityModel.OidcConstants;
 
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
@@ -125,12 +128,20 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
                 if (response.IsActive)
                 {
+                    var parseExtraClaimsContext = new ParseExtraClaimsContext(Context, Scheme, Options)
+                    {
+                        ParsedJsonResponse = response.Json
+                    };
+
+                    var extraClaims = await Events.ParseExtraClaims(parseExtraClaimsContext);
+                    var claims = response.Claims.Concat(extraClaims);
+
                     if (Options.EnableCaching)
                     {
-                        await _cache.SetClaimsAsync(Options, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                        await _cache.SetClaimsAsync(Options, token, claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                     }
 
-                    return await CreateTicket(response.Claims, token, Context, Scheme, Events, Options);
+                    return await CreateTicket(claims, token, Context, Scheme, Events, Options);
                 }
                 else
                 {
