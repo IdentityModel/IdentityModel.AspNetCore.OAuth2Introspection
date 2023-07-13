@@ -176,8 +176,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 	        HttpContext context, 
 	        AuthenticationScheme scheme, 
 	        OAuth2IntrospectionEvents events, 
-            OAuth2IntrospectionOptions options, 
-            CancellationToken cancellationToken)
+	        OAuth2IntrospectionOptions options, 
+	        CancellationToken cancellationToken)
         {
             var introspectionClient = await options.IntrospectionClient.Value.ConfigureAwait(false);
             using var request = CreateTokenIntrospectionRequest(token, context, scheme, events, options);
