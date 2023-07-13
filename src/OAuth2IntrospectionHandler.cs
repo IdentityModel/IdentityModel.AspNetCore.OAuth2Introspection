@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using System.Threading;
 using System.Threading.Tasks;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
@@ -25,8 +26,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private readonly IDistributedCache _cache;
         private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
-        private static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
-            new ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>>();
+        private static readonly ConcurrentDictionary<string, Lazy<Func<CancellationToken, Task<TokenIntrospectionResponse>>>> IntrospectionDictionary =
+            new ConcurrentDictionary<string, Lazy<Func<CancellationToken, Task<TokenIntrospectionResponse>>>>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OAuth2IntrospectionHandler"/> class.
@@ -108,14 +109,14 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             // with the same token come in at the same time
             try
             {
-                Lazy<Task<TokenIntrospectionResponse>> GetTokenIntrospectionResponseLazy(string _)
+                Lazy<Func<CancellationToken, Task<TokenIntrospectionResponse>>> GetTokenIntrospectionResponseLazy(string t)
                 {
-                    return new Lazy<Task<TokenIntrospectionResponse>>(async () => await LoadClaimsForToken(token, Context, Scheme, Events, Options));
+                    return new Lazy<Func<CancellationToken, Task<TokenIntrospectionResponse>>>(async ct => await LoadClaimsForToken(t, Context, Scheme, Events, Options, ct));
                 }
 
                 var response = await IntrospectionDictionary
                     .GetOrAdd(token, GetTokenIntrospectionResponseLazy)
-                    .Value;
+                    .Value(Context.RequestAborted);
 
                 if (response.IsError)
                 {
@@ -175,7 +176,8 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 	        HttpContext context, 
 	        AuthenticationScheme scheme, 
 	        OAuth2IntrospectionEvents events, 
-	        OAuth2IntrospectionOptions options)
+            OAuth2IntrospectionOptions options, 
+            CancellationToken cancellationToken)
         {
             var introspectionClient = await options.IntrospectionClient.Value.ConfigureAwait(false);
             using var request = CreateTokenIntrospectionRequest(token, context, scheme, events, options);
@@ -187,7 +189,7 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
 
             await events.SendingRequest(requestSendingContext);
 
-            return await introspectionClient.IntrospectTokenAsync(request, context.RequestAborted).ConfigureAwait(false);
+            return await introspectionClient.IntrospectTokenAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
         private static TokenIntrospectionRequest CreateTokenIntrospectionRequest(
