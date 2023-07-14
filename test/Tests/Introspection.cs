@@ -66,7 +66,7 @@ namespace Tests
         [Theory]
         [InlineData(IntrospectionEndpointHandler.Behavior.Active, HttpStatusCode.OK)]
         [InlineData(IntrospectionEndpointHandler.Behavior.Unauthorized, HttpStatusCode.Unauthorized)]
-        public async Task ActiveToken_WithTwoConcurrentCalls_FirstIntrospectSucceeds_SecondShouldNotBeCalled(
+        public async Task TwoConcurrentCalls_FirstIntrospectSucceeds_SecondShouldNotBeCalled(
             IntrospectionEndpointHandler.Behavior behavior,
             HttpStatusCode expectedStatusCode)
         {
