@@ -107,8 +107,7 @@ namespace Tests
                 waitForTheSecondRequestToStart.Set();
                 waitForTheFirstIntrospectionToStart.WaitOne();
                 client2.SetBearerToken(token);
-                var result = await client2.GetAsync("http://test");
-                return result;
+                return await client2.GetAsync("http://test");
             });
 
             await Task.WhenAll(request1, request2);
@@ -158,8 +157,7 @@ namespace Tests
                 waitForTheSecondRequestToStart.Set();
                 waitForTheFirstIntrospectionToStart.WaitOne();
                 client2.SetBearerToken(token);
-                var result = await client2.GetAsync("http://test");
-                return result;
+                return await client2.GetAsync("http://test");
             });
 
             await Task.WhenAll(request1, request2);
