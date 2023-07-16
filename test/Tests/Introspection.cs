@@ -66,7 +66,7 @@ namespace Tests
         [Theory]
         [InlineData(IntrospectionEndpointHandler.Behavior.Active, HttpStatusCode.OK)]
         [InlineData(IntrospectionEndpointHandler.Behavior.Unauthorized, HttpStatusCode.Unauthorized)]
-        public async Task TwoConcurrentCalls_FirstIntrospectSucceeds_SecondShouldNotBeCalled(
+        public async Task TwoConcurrentCalls_FirstIntrospectDoesNotThrow_SecondShouldNotBeCalled(
             IntrospectionEndpointHandler.Behavior behavior,
             HttpStatusCode expectedStatusCode)
         {
@@ -112,7 +112,7 @@ namespace Tests
 
             await Task.WhenAll(request1, request2);
 
-            var result1 = await request2;
+            var result1 = await request1;
             result1.StatusCode.Should().Be(expectedStatusCode);
 
             requestCount.Should().Be(1);
