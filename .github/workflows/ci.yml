@@ -25,8 +25,8 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: |
-          6.0.x
-          7.0.x
+          8.0.x
+          9.0.x
 
     - run: dotnet --info
     
@@ -39,4 +39,4 @@ jobs:
         SignClientSecret: ${{ secrets.SIGNCLIENTSECRET }}
       run: |
         ./build.cmd sign
-        dotnet nuget push .\artifacts\*.nupkg -s https://www.myget.org/F/identity/api/v2/package -k ${{ secrets.MYGET }}
+        dotnet nuget push .\artifacts\*.nupkg -s https://www.myget.org/F/identity/api/v2/package -k ${{ secrets.MYGET }} 

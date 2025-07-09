@@ -8,7 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using IdentityModel.Client;
+using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
@@ -33,21 +33,18 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         /// </summary>
         /// <param name="options">The options.</param>
         /// <param name="urlEncoder">The URL encoder.</param>
-        /// <param name="clock">The clock.</param>
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="cache">The cache.</param>
         public OAuth2IntrospectionHandler(
             IOptionsMonitor<OAuth2IntrospectionOptions> options,
             UrlEncoder urlEncoder,
-            ISystemClock clock,
             ILoggerFactory loggerFactory,
             IDistributedCache cache = null)
-            : base(options, loggerFactory, urlEncoder, clock)
+            : base(options, loggerFactory, urlEncoder)
         {
             _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
             _cache = cache;
         }
-
 
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.

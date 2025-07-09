@@ -2,9 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using FluentAssertions;
-using IdentityModel;
+using Duende.IdentityModel;
+using Duende.IdentityModel.Client;
 using IdentityModel.AspNetCore.OAuth2Introspection;
-using IdentityModel.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,8 +59,8 @@ namespace Tests
             result.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var request = handler.LastRequest;
-            request.Should().ContainKey("client_id").WhichValue.Should().Be(clientId);
-            request.Should().ContainKey("client_secret").WhichValue.Should().Be(clientSecret);
+            request.Should().ContainKey("client_id").WhoseValue.Should().Be(clientId);
+            request.Should().ContainKey("client_secret").WhoseValue.Should().Be(clientSecret);
         }
 
         [Theory]
@@ -199,17 +199,17 @@ namespace Tests
             result.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var request = handler.LastRequest;
-            request.Should().ContainKey("client_id").WhichValue.Should().Be(clientId);
-            request.Should().ContainKey("client_assertion_type").WhichValue.Should().Be("testType");
-            request.Should().ContainKey("client_assertion").WhichValue.Should().Be(assertion1);
+            request.Should().ContainKey("client_id").WhoseValue.Should().Be(clientId);
+            request.Should().ContainKey("client_assertion_type").WhoseValue.Should().Be("testType");
+            request.Should().ContainKey("client_assertion").WhoseValue.Should().Be(assertion1);
 
             result = await client.GetAsync("http://test");
             result.StatusCode.Should().Be(HttpStatusCode.OK);
 
             request = handler.LastRequest;
-            request.Should().ContainKey("client_id").WhichValue.Should().Be(clientId);
-            request.Should().ContainKey("client_assertion_type").WhichValue.Should().Be("testType");
-            request.Should().ContainKey("client_assertion").WhichValue.Should().Be(assertion2);
+            request.Should().ContainKey("client_id").WhoseValue.Should().Be(clientId);
+            request.Should().ContainKey("client_assertion_type").WhoseValue.Should().Be("testType");
+            request.Should().ContainKey("client_assertion").WhoseValue.Should().Be(assertion2);
         }
 
         [Fact]

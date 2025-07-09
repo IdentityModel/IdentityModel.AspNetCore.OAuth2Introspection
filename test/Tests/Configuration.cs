@@ -3,7 +3,7 @@
 
 using FluentAssertions;
 using IdentityModel.AspNetCore.OAuth2Introspection;
-using IdentityModel.Client;
+using Duende.IdentityModel.Client;
 using System;
 using System.Threading.Tasks;
 using Tests.Util;
