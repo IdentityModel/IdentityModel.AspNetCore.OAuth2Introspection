@@ -5,7 +5,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using IdentityModel.AspNetCore.OAuth2Introspection.Infrastructure;
-using IdentityModel.Client;
+using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 

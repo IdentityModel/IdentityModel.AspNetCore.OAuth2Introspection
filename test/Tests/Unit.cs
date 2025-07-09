@@ -24,7 +24,7 @@ namespace Tests
         public static void Token_From_Header(string expected, string[] headerValues)
         {
             var request = new MockHttpRequest();
-            request.Headers.Add("Authorization", new Microsoft.Extensions.Primitives.StringValues(headerValues));
+            request.Headers.Append("Authorization", new Microsoft.Extensions.Primitives.StringValues(headerValues));
 
             var actual = TokenRetrieval.FromAuthorizationHeader()(request);
             Assert.Equal(expected, actual);

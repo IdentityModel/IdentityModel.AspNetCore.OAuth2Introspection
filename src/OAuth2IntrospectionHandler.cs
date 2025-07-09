@@ -8,7 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using IdentityModel.Client;
+using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
@@ -28,27 +28,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         private static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
             new ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>>();
 
-#if NET6_0
-        /// <summary>
-        /// Initializes a new instance of the <see cref="OAuth2IntrospectionHandler"/> class.
-        /// </summary>
-        /// <param name="options">The options.</param>
-        /// <param name="urlEncoder">The URL encoder.</param>
-        /// <param name="clock">The clock.</param>
-        /// <param name="loggerFactory">The logger factory.</param>
-        /// <param name="cache">The cache.</param>
-        public OAuth2IntrospectionHandler(
-            IOptionsMonitor<OAuth2IntrospectionOptions> options,
-            UrlEncoder urlEncoder,
-            ISystemClock clock,
-            ILoggerFactory loggerFactory,
-            IDistributedCache cache = null)
-            : base(options, loggerFactory, urlEncoder, clock)
-        {
-            _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
-            _cache = cache;
-        }
-#elif NET8_0_OR_GREATER
         /// <summary>
         /// Initializes a new instance of the <see cref="OAuth2IntrospectionHandler"/> class.
         /// </summary>
@@ -66,8 +45,6 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
             _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
             _cache = cache;
         }
-#endif
-
 
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
